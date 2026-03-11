@@ -23,7 +23,20 @@ class _HomeScreenState extends State<HomeScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
-      _user = ModalRoute.of(context)!.settings.arguments as User;
+      // Intentamos obtener el usuario de los argumentos
+      final args = ModalRoute.of(context)!.settings.arguments;
+
+      if (args is User) {
+        _user = args;
+      } else {
+        // SI NO HAY ARGUMENTOS (como ahora), creamos un usuario temporal
+        // Esto evita que la app explote al iniciar directo en Home
+        _user = User() 
+          ..username = 'Marcos Admin'
+          ..email = 'admin@novapay.com'
+          ..phone = '123456789';
+      }
+
       _usernameCtrl.text = _user.username ?? '';
       _phoneCtrl.text = _user.phone ?? '';
       _initialized = true;
