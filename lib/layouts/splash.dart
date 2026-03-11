@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
+
 import '../config/theme.dart';
 import 'login.dart';
 
-/// Pantalla de presentación (Splash/Onboarding) de Novapay TPV
-/// Muestra el logo y presentación de la app durante 3 segundos
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
-  
   static const String routename = '/splash';
 
   @override
@@ -14,82 +13,57 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  late final VideoPlayerController _controller;
+  bool _hasNavigated = false;
+
   @override
   void initState() {
     super.initState();
-    
-    // Después de 3 segundos, navega a LoginScreen
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed(LoginScreen.routename);
-      }
-    });
+    _controller = VideoPlayerController.asset('assets/videos/novapay.mp4')
+      ..initialize().then((_) {
+        setState(() {});
+        _controller.setLooping(false);
+        _controller.play();
+      });
+
+    _controller.addListener(_onVideoUpdate);
+  }
+
+  void _onVideoUpdate() {
+    if (!mounted || _hasNavigated || !_controller.value.isInitialized) return;
+
+    final position = _controller.value.position;
+    final duration = _controller.value.duration;
+
+    if (duration > Duration.zero && position >= duration - const Duration(milliseconds: 200)) {
+      _hasNavigated = true;
+      Navigator.of(context).pushReplacementNamed(LoginScreen.routename);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onVideoUpdate);
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background, // Blanco
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Logo o icono de Novapay
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.primary, // Morado vibrante
-              ),
-              child: const Center(
-                child: Text(
-                  'N',
-                  style: TextStyle(
-                    fontSize: 60,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+      backgroundColor: AppTheme.background,
+      body: _controller.value.isInitialized
+          ? SizedBox.expand(
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _controller.value.size.width,
+                  height: _controller.value.size.height,
+                  child: VideoPlayer(_controller),
                 ),
               ),
-            ),
-            
-            const SizedBox(height: 40),
-            
-            // Título
-            Text(
-              'Novapay TPV',
-              style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                color: AppTheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Subtítulo
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Text(
-                'Gestiona tu negocio con eficiencia',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppTheme.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            
-            const SizedBox(height: 60),
-            
-            // Indicador de carga
-            CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.secondary),
-              strokeWidth: 3,
-            ),
-          ],
-        ),
-      ),
+            )
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 }

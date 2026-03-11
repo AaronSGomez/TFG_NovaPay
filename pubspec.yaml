@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Video Player
+  video_player: ^2.5.1
+  video_player_win: ^3.0.0
   
   # Base de Datos
   isar: ^3.1.0+1
@@ -46,5 +49,6 @@ flutter:
 
   assets:
     - assets/images/novapay.webp
+    - assets/videos/novapay.mp4
 
 
