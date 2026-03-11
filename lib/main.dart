@@ -1,21 +1,21 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
-import 'config/theme.dart';
-import 'layouts/splash.dart';
-import 'layouts/login.dart';
-import 'layouts/dashboard.dart';
-import 'layouts/home.dart';
+import 'package:media_kit/media_kit.dart';
 
-// Comentamos esto temporalmente hasta que conectemos la lógica
-// import 'db/isar.dart';
-// import 'services/userServices.dart';
+import 'config/theme.dart';
+import 'data/local/isar.dart';
+import 'services/userServices.dart';
+import 'presentation/pages/splash.page.dart';
+import 'presentation/pages/login.page.dart';
+import 'presentation/pages/dashboard.users.page.dart';
+import 'presentation/pages/dashboard.caja.page.dart';
+import 'presentation/pages/profile.page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Dejaremos la conexión a la base de datos para más adelante
-  // final isar = await openIsar();
-  // await seedAdmin(isar);
-  
+  MediaKit.ensureInitialized();
+  final isar = await openIsar();
+  await seedAdmin(isar);
   runApp(const MainApp());
 }
 
@@ -24,21 +24,18 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp( // Más adelante lo cambiaremos a GetMaterialApp
+    return MaterialApp(
       title: 'Novapay TPV',
-      theme: AppTheme.lightTheme, // ¡Aquí tu tema de Material 3 está cobrando vida!
-      
-      // Cambiamos el inicio directo al Home
-      home: const SplashScreen(), 
-      
+      theme: AppTheme.lightTheme,
+      home: const SplashPage(),
       routes: {
-        LoginScreen.routename: (context) => const LoginScreen(),
-        SplashScreen.routename: (context) => const SplashScreen(),
-        DashboardScreen.routename: (context) => const DashboardScreen(),
-        HomeScreen.routename: (context) => const HomeScreen(),
+        SplashPage.routename: (_) => const SplashPage(),
+        LoginPage.routename: (_) => const LoginPage(),
+        DashboardUsersPage.routename: (_) => const DashboardUsersPage(),
+        DashboardCajaPage.routename: (_) => const DashboardCajaPage(),
+        ProfilePage.routename: (_) => const ProfilePage(),
       },
-      // Quita la etiqueta de "DEBUG" de la esquina superior derecha
-      debugShowCheckedModeBanner: false, 
+      debugShowCheckedModeBanner: false,
     );
   }
 }

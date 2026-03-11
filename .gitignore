@@ -43,3 +43,24 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Build folders
+build/
+android/build/
+
+# Flutter/Dart generated
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+
+# Platform specific generated files
+**/GeneratedPluginRegistrant.swift
+**/generated_plugin_registrant.cc
+**/generated_plugins.cmake
+
+
+proyecto.md
+estructura.md
+commits.md
+comandos.md
