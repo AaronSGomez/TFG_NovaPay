@@ -1,3 +1,5 @@
+// lib/config/theme.dart
+// configuración visual global
 import 'package:flutter/material.dart';
 
 class AppTheme {
