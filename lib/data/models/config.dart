@@ -7,6 +7,8 @@ part 'config.g.dart';
 class Config {
   Id id = Isar.autoIncrement;
   String businessMode = 'bar';
+  /// Deprecated: usar BusinessConfig.businessName como fuente canónica.
+  /// Mantenido solo por compatibilidad con el schema Isar generado.
   String businessName = '';
   String? printerMacAddress;
 }

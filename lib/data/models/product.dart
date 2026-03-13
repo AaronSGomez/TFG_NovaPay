@@ -1,6 +1,6 @@
 // lib/data/models/product.dart
 import 'package:isar/isar.dart';
-import 'enums/tax.rate.enum.dart';
+import 'enums/tax_rate_enum.dart';
 
 part 'product.g.dart';
 

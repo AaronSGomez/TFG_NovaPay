@@ -28,6 +28,8 @@ dependencies:
   get_it: ^7.6.0
 
   # Utilidades y Helpers
+  uuid: ^4.5.3
+  crypto: ^3.0.3
   equatable: ^2.0.0
   dartz: ^0.10.0
   intl: ^0.19.0

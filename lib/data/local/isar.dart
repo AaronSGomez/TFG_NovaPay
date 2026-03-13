@@ -4,9 +4,10 @@ import 'package:path_provider/path_provider.dart';
 import '../../data/models/user.dart';
 import '../../data/models/product.dart';
 import '../../data/models/ticket.dart';
-import '../../data/models/daily.report.dart';
+import '../../data/models/daily_report.dart';
 import '../../data/models/config.dart';
-import '../../data/models/business.config.dart';
+import '../../data/models/business_config.dart';
+import '../../data/models/expense.dart';
 
 Future<Isar> openIsar() async {
   if (Isar.instanceNames.isNotEmpty) {
@@ -21,6 +22,7 @@ Future<Isar> openIsar() async {
       DailyReportSchema,
       ConfigSchema,
       BusinessConfigSchema,
+      ExpenseSchema,
     ],
     directory: dir.path,
   );

@@ -6,22 +6,22 @@ import 'package:media_kit/media_kit.dart';
 
 import 'config/theme.dart';
 import 'data/local/isar.dart';
-import 'data/seed/product.seed.dart';
-import 'services/userServices.dart';
-import 'services/config.service.dart';
-import 'bindings/app.bindings.dart';
-import 'presentation/pages/splash.page.dart';
-import 'presentation/pages/login.page.dart';
-import 'presentation/pages/admin/admin.shell.page.dart';
-import 'presentation/pages/profile.page.dart';
+import 'data/seed/product_seed.dart';
+import 'services/user_service.dart';
+import 'services/config_service.dart';
+import 'bindings/app_bindings.dart';
+import 'presentation/pages/splash_page.dart';
+import 'presentation/pages/login_page.dart';
+import 'presentation/pages/admin/admin_shell_page.dart';
+import 'presentation/pages/profile_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
   final isar = await openIsar();
-  await seedAdmin(isar);
+  await UserService(isar).seedAdmin();
   await seedProducts(isar);
-  await seedBusinessConfig(isar);
+  await ConfigService(isar).seedBusinessConfig();
   runApp(MainApp(isar: isar));
 }
 
@@ -35,13 +35,13 @@ class MainApp extends StatelessWidget {
       title: 'Novapay TPV',
       theme: AppTheme.lightModernTheme,
       initialBinding: AppBindings(isar),
-      home: const SplashPage(),
-      routes: {
-        SplashPage.routename:      (_) => const SplashPage(),
-        LoginPage.routename:       (_) => const LoginPage(),
-        AdminShellPage.routename:  (_) => const AdminShellPage(),
-        ProfilePage.routename:     (_) => const ProfilePage(),
-      },
+      initialRoute: SplashPage.routename,
+      getPages: [
+        GetPage(name: SplashPage.routename,     page: () => const SplashPage()),
+        GetPage(name: LoginPage.routename,      page: () => const LoginPage()),
+        GetPage(name: AdminShellPage.routename, page: () => const AdminShellPage()),
+        GetPage(name: ProfilePage.routename,    page: () => const ProfilePage()),
+      ],
       debugShowCheckedModeBanner: false,
     );
   }

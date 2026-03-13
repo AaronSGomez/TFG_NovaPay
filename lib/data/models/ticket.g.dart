@@ -76,7 +76,47 @@ const TicketSchema = CollectionSchema(
   deserialize: _ticketDeserialize,
   deserializeProp: _ticketDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'createdAt': IndexSchema(
+      id: -3433535483987302584,
+      name: r'createdAt',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'createdAt',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    ),
+    r'status': IndexSchema(
+      id: -107785170620420283,
+      name: r'status',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'status',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    ),
+    r'isParked': IndexSchema(
+      id: 2300528186361779568,
+      name: r'isParked',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'isParked',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    )
+  },
   links: {},
   embeddedSchemas: {r'TicketLine': TicketLineSchema},
   getId: _ticketGetId,
@@ -248,6 +288,30 @@ extension TicketQueryWhereSort on QueryBuilder<Ticket, Ticket, QWhere> {
       return query.addWhereClause(const IdWhereClause.any());
     });
   }
+
+  QueryBuilder<Ticket, Ticket, QAfterWhere> anyCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'createdAt'),
+      );
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterWhere> anyStatus() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'status'),
+      );
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterWhere> anyIsParked() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'isParked'),
+      );
+    });
+  }
 }
 
 extension TicketQueryWhere on QueryBuilder<Ticket, Ticket, QWhereClause> {
@@ -313,6 +377,231 @@ extension TicketQueryWhere on QueryBuilder<Ticket, Ticket, QWhereClause> {
         upper: upperId,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterWhereClause> createdAtEqualTo(
+      DateTime createdAt) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'createdAt',
+        value: [createdAt],
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterWhereClause> createdAtNotEqualTo(
+      DateTime createdAt) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'createdAt',
+              lower: [],
+              upper: [createdAt],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'createdAt',
+              lower: [createdAt],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'createdAt',
+              lower: [createdAt],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'createdAt',
+              lower: [],
+              upper: [createdAt],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterWhereClause> createdAtGreaterThan(
+    DateTime createdAt, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'createdAt',
+        lower: [createdAt],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterWhereClause> createdAtLessThan(
+    DateTime createdAt, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'createdAt',
+        lower: [],
+        upper: [createdAt],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterWhereClause> createdAtBetween(
+    DateTime lowerCreatedAt,
+    DateTime upperCreatedAt, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'createdAt',
+        lower: [lowerCreatedAt],
+        includeLower: includeLower,
+        upper: [upperCreatedAt],
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterWhereClause> statusEqualTo(
+      TicketStatus status) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'status',
+        value: [status],
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterWhereClause> statusNotEqualTo(
+      TicketStatus status) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'status',
+              lower: [],
+              upper: [status],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'status',
+              lower: [status],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'status',
+              lower: [status],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'status',
+              lower: [],
+              upper: [status],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterWhereClause> statusGreaterThan(
+    TicketStatus status, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'status',
+        lower: [status],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterWhereClause> statusLessThan(
+    TicketStatus status, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'status',
+        lower: [],
+        upper: [status],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterWhereClause> statusBetween(
+    TicketStatus lowerStatus,
+    TicketStatus upperStatus, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'status',
+        lower: [lowerStatus],
+        includeLower: includeLower,
+        upper: [upperStatus],
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterWhereClause> isParkedEqualTo(
+      bool isParked) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'isParked',
+        value: [isParked],
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterWhereClause> isParkedNotEqualTo(
+      bool isParked) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isParked',
+              lower: [],
+              upper: [isParked],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isParked',
+              lower: [isParked],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isParked',
+              lower: [isParked],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isParked',
+              lower: [],
+              upper: [isParked],
+              includeUpper: false,
+            ));
+      }
     });
   }
 }
