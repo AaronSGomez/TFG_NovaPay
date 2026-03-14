@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../data/models/ticket.dart';
 import '../../data/models/ticket_line.dart';
 import '../../services/ticket_service.dart';
+import 'report_controller.dart';
 
 class TicketHistoryController extends GetxController {
   final TicketService _service;
@@ -24,7 +25,9 @@ class TicketHistoryController extends GetxController {
   Future<void> loadAll() async {
     try {
       isLoading.value  = true;
-      allTickets.value = await _service.getAll();
+      // Solo tickets cerrados (pagado/cancelado).
+      // Los tickets abiertos son mesas activas y pertenecen a la sección Sala.
+      allTickets.value = await _service.getClosed();
     } catch (e) {
       Get.snackbar('Error', 'No se pudo cargar el historial');
     } finally {
@@ -108,6 +111,7 @@ class TicketHistoryController extends GetxController {
       await _service.correctPayment(editingTicket.value!, lineIndices, method);
       editingTicket.value = null;
       await loadAll();
+      Get.find<ReportController>().loadLiveStats();
     } catch (e) {
       Get.snackbar('Error', 'No se pudo completar la corrección de cobro');
     }
@@ -120,6 +124,7 @@ class TicketHistoryController extends GetxController {
       await _service.cancel(editingTicket.value!);
       editingTicket.value = null;
       await loadAll();
+      Get.find<ReportController>().loadLiveStats();
     } catch (e) {
       Get.snackbar('Error', 'No se pudo cancelar el ticket');
     }

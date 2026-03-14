@@ -102,18 +102,6 @@ class TicketController extends GetxController {
     }
   }
 
-  Future<void> payActive(PaymentMethod method) async {
-    if (activeTicket.value == null) return;
-    try {
-      await _service.pay(activeTicket.value!, method);
-      activeTicket.value = null;
-      await loadTickets();
-      Get.find<TicketHistoryController>().loadAll();
-    } catch (e) {
-      Get.snackbar('Error', 'No se pudo cobrar el ticket');
-    }
-  }
-
   Future<void> cancelActive() async {
     if (activeTicket.value == null) return;
     try {
@@ -121,15 +109,23 @@ class TicketController extends GetxController {
       activeTicket.value = null;
       await loadTickets();
       Get.find<TicketHistoryController>().loadAll();
+      Get.find<ReportController>().loadLiveStats();
     } catch (e) {
       Get.snackbar('Error', 'No se pudo cancelar el ticket');
     }
   }
 
-  Future<void> payLines(List<int> lineIndices, PaymentMethod method) async {
+  Future<void> payLines(
+    List<int> lineIndices,
+    PaymentMethod method, {
+    Map<int, int>? partialQtys,
+  }) async {
     if (activeTicket.value == null) return;
     try {
-      await _service.paySelectedLines(activeTicket.value!, lineIndices, method);
+      await _service.paySelectedLines(
+        activeTicket.value!, lineIndices, method,
+        partialQtys: partialQtys,
+      );
       final updated = await _service.getById(activeTicket.value!.id);
       if (updated == null || updated.status == TicketStatus.pagado) {
         activeTicket.value = null;

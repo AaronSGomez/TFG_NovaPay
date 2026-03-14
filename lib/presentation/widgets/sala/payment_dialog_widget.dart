@@ -3,30 +3,29 @@ import 'package:flutter/material.dart';
 
 import '../../../config/app_formats.dart';
 import '../../../data/models/ticket.dart';
-import '../../../data/models/ticket_line.dart';
 
-/// Diálogo de cobro con selección de líneas y cálculo de cambio.
+/// Diálogo de cobro simplificado.
+/// Muestra el total, permite elegir método de pago y calcular el cambio en efectivo.
+/// No permite pago parcial por líneas.
 class PaymentDialogWidget extends StatefulWidget {
-  final List<TicketLine> lines;
-  final void Function(List<int> lineIndices, PaymentMethod method) onConfirm;
+  final double                          total;
+  final void Function(PaymentMethod method) onConfirm;
 
   const PaymentDialogWidget({
     super.key,
-    required this.lines,
+    required this.total,
     required this.onConfirm,
   });
 
-  /// Abre el diálogo y devuelve el resultado.
   static Future<void> show(
     BuildContext context, {
-    required List<TicketLine> lines,
-    required void Function(List<int> lineIndices, PaymentMethod method)
-        onConfirm,
+    required double total,
+    required void Function(PaymentMethod method) onConfirm,
   }) {
     return showDialog(
-      context: context,
+      context:           context,
       barrierDismissible: false,
-      builder: (_) => PaymentDialogWidget(lines: lines, onConfirm: onConfirm),
+      builder: (_) => PaymentDialogWidget(total: total, onConfirm: onConfirm),
     );
   }
 
@@ -38,15 +37,8 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
   final _fmt      = AppFormats.currency;
   final _cashCtrl = TextEditingController();
 
-  late final List<bool> _selected;
   PaymentMethod _method    = PaymentMethod.efectivo;
   double        _cashGiven = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _selected = List.filled(widget.lines.length, true);
-  }
 
   @override
   void dispose() {
@@ -54,30 +46,14 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
     super.dispose();
   }
 
-  // ── Cálculos ──────────────────────────────────────────────────────────────
-
-  double get _subtotal {
-    double total = 0;
-    for (int i = 0; i < widget.lines.length; i++) {
-      if (_selected[i]) total += widget.lines[i].totalLine;
-    }
-    return total;
-  }
-
   double get _change => _method == PaymentMethod.efectivo
-      ? (_cashGiven - _subtotal).clamp(0, double.infinity)
+      ? (_cashGiven - widget.total).clamp(0, double.infinity)
       : 0;
 
   bool get _canConfirm {
-    if (!_selected.contains(true)) return false;
-    if (_method == PaymentMethod.efectivo) return _cashGiven >= _subtotal;
+    if (_method == PaymentMethod.efectivo) return _cashGiven >= widget.total;
     return true;
   }
-
-  List<int> get _selectedIndices =>
-      [for (int i = 0; i < _selected.length; i++) if (_selected[i]) i];
-
-  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -87,61 +63,42 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
       title: const Text('Cobrar'),
       contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       content: SizedBox(
-        width: 380,
+        width: 340,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize:      MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Selección de líneas ──────────────────────────────────────
-            Text('Selecciona qué se paga', style: theme.textTheme.labelLarge),
-            const SizedBox(height: 4),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 200),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: widget.lines.length,
-                itemBuilder: (_, i) {
-                  final line = widget.lines[i];
-                  return CheckboxListTile(
-                    dense:         true,
-                    value:         _selected[i],
-                    controlAffinity: ListTileControlAffinity.leading,
-                    title: Text(
-                      '${line.productName} ×${line.quantity}',
-                      style: theme.textTheme.bodyMedium,
+            // ── Total ──────────────────────────────────────────────────────
+            Container(
+              width:   double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color:        theme.colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    'Total a cobrar',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer,
                     ),
-                    secondary: Text(
-                      _fmt.format(line.totalLine),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _fmt.format(widget.total),
+                    style: theme.textTheme.displaySmall?.copyWith(
+                      color:      theme.colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.bold,
                     ),
-                    onChanged: (v) =>
-                        setState(() => _selected[i] = v ?? false),
-                  );
-                },
+                  ),
+                ],
               ),
             ),
 
-            const Divider(),
+            const SizedBox(height: 16),
 
-            // ── Total seleccionado ────────────────────────────────────────
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Total a cobrar', style: theme.textTheme.labelLarge),
-                Text(
-                  _fmt.format(_subtotal),
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // ── Método de pago ────────────────────────────────────────────
+            // ── Método de pago ─────────────────────────────────────────────
             Text('Forma de pago', style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
             Row(
@@ -173,29 +130,37 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
               ],
             ),
 
-            // ── Efectivo: importe dado y cambio ───────────────────────────
+            // ── Efectivo: importe entregado y cambio ───────────────────────
             if (_method == PaymentMethod.efectivo) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               TextField(
-                controller: _cashCtrl,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText:   'Cliente entrega (€)',
-                  prefixIcon:  Icon(Icons.euro),
-                  isDense:     true,
+                controller:   _cashCtrl,
+                autofocus:    true,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration:   const InputDecoration(
+                  labelText:  'Cliente entrega (€)',
+                  prefixIcon: Icon(Icons.euro),
+                  isDense:    true,
                 ),
                 onChanged: (v) => setState(
                   () => _cashGiven = double.tryParse(v.replaceAll(',', '.')) ?? 0,
                 ),
               ),
-              const SizedBox(height: 8),
-              _ChangeRow(
-                label: 'Cambio',
-                value: _fmt.format(_change),
-                color: _change >= 0
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.error,
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Cambio', style: theme.textTheme.bodyMedium),
+                  Text(
+                    _fmt.format(_change),
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color:      _change >= 0
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.error,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ],
 
@@ -206,13 +171,13 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
+          child:     const Text('Cancelar'),
         ),
         ElevatedButton(
           onPressed: _canConfirm
               ? () {
                   Navigator.pop(context);
-                  widget.onConfirm(_selectedIndices, _method);
+                  widget.onConfirm(_method);
                 }
               : null,
           child: const Text('Cobrar'),
@@ -245,14 +210,14 @@ class _MethodButton extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          duration:  const Duration(milliseconds: 150),
+          padding:   const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: selected
+            color:        selected
                 ? theme.colorScheme.primaryContainer
                 : theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(8),
-            border: selected
+            border:       selected
                 ? Border.all(color: theme.colorScheme.primary, width: 1.5)
                 : null,
           ),
@@ -270,49 +235,16 @@ class _MethodButton extends StatelessWidget {
               Text(
                 label,
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: selected
+                  color:      selected
                       ? theme.colorScheme.primary
                       : theme.colorScheme.onSurfaceVariant,
-                  fontWeight:
-                      selected ? FontWeight.w700 : FontWeight.normal,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-// ── Fila de cambio ────────────────────────────────────────────────────────────
-
-class _ChangeRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color  color;
-
-  const _ChangeRow({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: theme.textTheme.bodyMedium),
-        Text(
-          value,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            color:      color,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
     );
   }
 }

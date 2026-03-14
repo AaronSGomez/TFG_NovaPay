@@ -158,16 +158,6 @@ class _TicketsSectionState extends State<TicketsSection> {
                 onTap:    () => setState(() => _statusFilter = null),
               ),
               FilterChipButton(
-                label:    'Abiertos',
-                color:    AppTheme.info,
-                selected: _statusFilter == TicketStatus.abierto,
-                onTap:    () => setState(
-                  () => _statusFilter = _statusFilter == TicketStatus.abierto
-                      ? null
-                      : TicketStatus.abierto,
-                ),
-              ),
-              FilterChipButton(
                 label:    'Pagados',
                 color:    AppTheme.success,
                 selected: _statusFilter == TicketStatus.pagado,
@@ -309,7 +299,8 @@ class _TicketRow extends StatelessWidget {
       ),
       subtitle: Text(
         '${dateFmt.format(ticket.createdAt)}  ·  '
-        '${ticket.lines.length} líneas  ·  ${paymentMethodLabel(ticket.paymentMethod)}',
+        '${ticket.lines.length} líneas  ·  ${paymentMethodLabel(ticket.paymentMethod)}'
+        '${ticket.parentTicketUuid != null ? '  ·  pago parcial' : ''}',
         style: theme.textTheme.bodySmall,
       ),
       trailing: Text(
@@ -572,9 +563,10 @@ class _TicketCorrectionSheetState extends State<_TicketCorrectionSheet> {
     }
     await PaymentDialogWidget.show(
       context,
-      lines: ticket.lines,
-      onConfirm: (lineIndices, method) async {
-        await _ctrl.rechargeEditing(lineIndices, method);
+      total: ticket.totalAmount,
+      onConfirm: (method) async {
+        final allIndices = List.generate(ticket.lines.length, (i) => i);
+        await _ctrl.rechargeEditing(allIndices, method);
         if (mounted) Navigator.of(context).pop();
       },
     );

@@ -84,8 +84,7 @@ class _SalaSectionState extends State<SalaSection> {
             builder: (context, constraints) {
               final w = constraints.maxWidth;
               if (w < 600) return _buildNarrowLayout();
-              final panelFraction = w >= 900 ? 0.40 : 0.50;
-              return _buildWideLayout(constraints.maxWidth * panelFraction);
+              return _buildWideLayout();
             },
           ),
         ),
@@ -107,35 +106,31 @@ class _SalaSectionState extends State<SalaSection> {
     );
   }
 
-  // ── Layout wide: grid izquierda + panel derecha ───────────────────────────
+  // ── Layout wide ───────────────────────────────────────────────────────────
+  // Cuando hay mesa seleccionada, el panel de ticket ocupa toda la pantalla
+  // (el catálogo de productos es el protagonista). Si no hay selección, se
+  // muestra el grid de mesas.
 
-  Widget _buildWideLayout(double panelWidth) {
-    return Obx(() {
-      final tickets = _ticketCtrl.openTickets.toList();
-      return Row(
-        children: [
-          Expanded(
-            child: _buildGrid(tickets),
-          ),
-          if (_selectedTable != null) ...[
-            const VerticalDivider(width: 1, thickness: 1),
-            SizedBox(
-              width: panelWidth,
-              child: TicketPanelWidget(
-                tableNumber: _selectedTable!,
-                onClose:     _clearSelection,
-              ),
-            ),
-          ],
-        ],
+  Widget _buildWideLayout() {
+    if (_selectedTable != null) {
+      return TicketPanelWidget(
+        tableNumber: _selectedTable!,
+        onClose:     _clearSelection,
       );
-    });
+    }
+    return Obx(() => _buildGrid([
+      ..._ticketCtrl.openTickets,
+      ..._ticketCtrl.parkedTickets,
+    ]));
   }
 
   // ── Layout narrow: solo grid ──────────────────────────────────────────────
 
   Widget _buildNarrowLayout() {
-    return Obx(() => _buildGrid(_ticketCtrl.openTickets.toList()));
+    return Obx(() => _buildGrid([
+      ..._ticketCtrl.openTickets,
+      ..._ticketCtrl.parkedTickets,
+    ]));
   }
 
   // ── Grid de mesas ─────────────────────────────────────────────────────────
