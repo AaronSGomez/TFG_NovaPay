@@ -28,7 +28,7 @@ class SectionHeader extends StatelessWidget {
               tooltip: 'Recargar',
               onPressed: onRefresh,
             ),
-          if (trailing != null) trailing!,
+          ?trailing,
         ],
       ),
     );
