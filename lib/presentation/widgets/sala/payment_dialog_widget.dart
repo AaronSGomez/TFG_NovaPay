@@ -8,20 +8,15 @@ import '../../../data/models/ticket_line.dart';
 /// Diálogo de cobro con selección de líneas y cálculo de cambio.
 class PaymentDialogWidget extends StatefulWidget {
   final List<TicketLine> lines;
-  final void Function(List<int> lineIndices, PaymentMethod method) onConfirm;
+  final void Function(List<int> lineIndices, PaymentMethod method, double? cashGiven, double? change) onConfirm;
 
-  const PaymentDialogWidget({
-    super.key,
-    required this.lines,
-    required this.onConfirm,
-  });
+  const PaymentDialogWidget({super.key, required this.lines, required this.onConfirm});
 
   /// Abre el diálogo y devuelve el resultado.
   static Future<void> show(
     BuildContext context, {
     required List<TicketLine> lines,
-    required void Function(List<int> lineIndices, PaymentMethod method)
-        onConfirm,
+    required void Function(List<int> lineIndices, PaymentMethod method, double? cashGiven, double? change) onConfirm,
   }) {
     return showDialog(
       context: context,
@@ -35,12 +30,12 @@ class PaymentDialogWidget extends StatefulWidget {
 }
 
 class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
-  final _fmt      = AppFormats.currency;
+  final _fmt = AppFormats.currency;
   final _cashCtrl = TextEditingController();
 
   late final List<bool> _selected;
-  PaymentMethod _method    = PaymentMethod.efectivo;
-  double        _cashGiven = 0;
+  PaymentMethod _method = PaymentMethod.efectivo;
+  double _cashGiven = 0;
 
   @override
   void initState() {
@@ -64,9 +59,7 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
     return total;
   }
 
-  double get _change => _method == PaymentMethod.efectivo
-      ? (_cashGiven - _subtotal).clamp(0, double.infinity)
-      : 0;
+  double get _change => _method == PaymentMethod.efectivo ? (_cashGiven - _subtotal).clamp(0, double.infinity) : 0;
 
   bool get _canConfirm {
     if (!_selected.contains(true)) return false;
@@ -74,8 +67,10 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
     return true;
   }
 
-  List<int> get _selectedIndices =>
-      [for (int i = 0; i < _selected.length; i++) if (_selected[i]) i];
+  List<int> get _selectedIndices => [
+    for (int i = 0; i < _selected.length; i++)
+      if (_selected[i]) i,
+  ];
 
   // ── Build ─────────────────────────────────────────────────────────────────
 
@@ -103,21 +98,15 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
                 itemBuilder: (_, i) {
                   final line = widget.lines[i];
                   return CheckboxListTile(
-                    dense:         true,
-                    value:         _selected[i],
+                    dense: true,
+                    value: _selected[i],
                     controlAffinity: ListTileControlAffinity.leading,
-                    title: Text(
-                      '${line.productName} ×${line.quantity}',
-                      style: theme.textTheme.bodyMedium,
-                    ),
+                    title: Text('${line.productName} ×${line.quantity}', style: theme.textTheme.bodyMedium),
                     secondary: Text(
                       _fmt.format(line.totalLine),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                    onChanged: (v) =>
-                        setState(() => _selected[i] = v ?? false),
+                    onChanged: (v) => setState(() => _selected[i] = v ?? false),
                   );
                 },
               ),
@@ -132,9 +121,7 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
                 Text('Total a cobrar', style: theme.textTheme.labelLarge),
                 Text(
                   _fmt.format(_subtotal),
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                  ),
+                  style: theme.textTheme.headlineSmall?.copyWith(color: theme.colorScheme.primary),
                 ),
               ],
             ),
@@ -147,28 +134,28 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
             Row(
               children: [
                 _MethodButton(
-                  label:    'Efectivo',
-                  icon:     Icons.payments_outlined,
+                  label: 'Efectivo',
+                  icon: Icons.payments_outlined,
                   selected: _method == PaymentMethod.efectivo,
-                  onTap:    () => setState(() {
-                    _method    = PaymentMethod.efectivo;
+                  onTap: () => setState(() {
+                    _method = PaymentMethod.efectivo;
                     _cashGiven = 0;
                     _cashCtrl.clear();
                   }),
                 ),
                 const SizedBox(width: 8),
                 _MethodButton(
-                  label:    'Tarjeta',
-                  icon:     Icons.credit_card_outlined,
+                  label: 'Tarjeta',
+                  icon: Icons.credit_card_outlined,
                   selected: _method == PaymentMethod.tarjeta,
-                  onTap:    () => setState(() => _method = PaymentMethod.tarjeta),
+                  onTap: () => setState(() => _method = PaymentMethod.tarjeta),
                 ),
                 const SizedBox(width: 8),
                 _MethodButton(
-                  label:    'Mixto',
-                  icon:     Icons.compare_arrows,
+                  label: 'Mixto',
+                  icon: Icons.compare_arrows,
                   selected: _method == PaymentMethod.mixto,
-                  onTap:    () => setState(() => _method = PaymentMethod.mixto),
+                  onTap: () => setState(() => _method = PaymentMethod.mixto),
                 ),
               ],
             ),
@@ -178,24 +165,19 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
               const SizedBox(height: 12),
               TextField(
                 controller: _cashCtrl,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(
-                  labelText:   'Cliente entrega (€)',
-                  prefixIcon:  Icon(Icons.euro),
-                  isDense:     true,
+                  labelText: 'Cliente entrega (€)',
+                  prefixIcon: Icon(Icons.euro),
+                  isDense: true,
                 ),
-                onChanged: (v) => setState(
-                  () => _cashGiven = double.tryParse(v.replaceAll(',', '.')) ?? 0,
-                ),
+                onChanged: (v) => setState(() => _cashGiven = double.tryParse(v.replaceAll(',', '.')) ?? 0),
               ),
               const SizedBox(height: 8),
               _ChangeRow(
                 label: 'Cambio',
                 value: _fmt.format(_change),
-                color: _change >= 0
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.error,
+                color: _change >= 0 ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.error,
               ),
             ],
 
@@ -204,15 +186,17 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
-        ),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
         ElevatedButton(
           onPressed: _canConfirm
               ? () {
                   Navigator.pop(context);
-                  widget.onConfirm(_selectedIndices, _method);
+                  widget.onConfirm(
+                    _selectedIndices,
+                    _method,
+                    _method == PaymentMethod.efectivo ? _cashGiven : null,
+                    _method == PaymentMethod.efectivo ? _change : null,
+                  );
                 }
               : null,
           child: const Text('Cobrar'),
@@ -225,17 +209,12 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
 // ── Botón de método de pago ───────────────────────────────────────────────────
 
 class _MethodButton extends StatelessWidget {
-  final String       label;
-  final IconData     icon;
-  final bool         selected;
+  final String label;
+  final IconData icon;
+  final bool selected;
   final VoidCallback onTap;
 
-  const _MethodButton({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
+  const _MethodButton({required this.label, required this.icon, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -245,9 +224,7 @@ class _MethodButton extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(
-          color: selected
-              ? theme.colorScheme.primaryContainer
-              : theme.colorScheme.surfaceContainerHighest,
+          color: selected ? theme.colorScheme.primaryContainer : theme.colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(8),
           border: selected
               ? Border.all(color: theme.colorScheme.primary, width: 1.5)
@@ -265,20 +242,15 @@ class _MethodButton extends StatelessWidget {
                 children: [
                   Icon(
                     icon,
-                    size:  20,
-                    color: selected
-                        ? theme.colorScheme.onPrimaryContainer
-                        : theme.colorScheme.onSurfaceVariant,
+                    size: 20,
+                    color: selected ? theme.colorScheme.onPrimaryContainer : theme.colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     label,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: selected
-                          ? theme.colorScheme.onPrimaryContainer
-                          : theme.colorScheme.onSurfaceVariant,
-                      fontWeight:
-                          selected ? FontWeight.w700 : FontWeight.normal,
+                      color: selected ? theme.colorScheme.onPrimaryContainer : theme.colorScheme.onSurfaceVariant,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
                     ),
                   ),
                 ],
@@ -296,13 +268,9 @@ class _MethodButton extends StatelessWidget {
 class _ChangeRow extends StatelessWidget {
   final String label;
   final String value;
-  final Color  color;
+  final Color color;
 
-  const _ChangeRow({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+  const _ChangeRow({required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -313,10 +281,7 @@ class _ChangeRow extends StatelessWidget {
         Text(label, style: theme.textTheme.bodyMedium),
         Text(
           value,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            color:      color,
-            fontWeight: FontWeight.bold,
-          ),
+          style: theme.textTheme.headlineSmall?.copyWith(color: color, fontWeight: FontWeight.bold),
         ),
       ],
     );

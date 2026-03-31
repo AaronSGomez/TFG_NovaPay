@@ -2,19 +2,26 @@
 import 'package:get/get.dart';
 import '../../data/models/ticket.dart';
 import '../../data/models/ticket_line.dart';
+import '../../data/models/verifactu_models.dart';
+import '../../services/receipt_print_service.dart';
 import '../../services/ticket_service.dart';
+import '../../services/verifactu_service.dart';
 import 'product_controller.dart';
 import 'report_controller.dart';
 import 'ticket_history_controller.dart';
+import 'verifactu_controller.dart';
 
 class TicketController extends GetxController {
   final TicketService _service;
-  TicketController(this._service);
+  final VerifactuService _verifactuService;
+  final ReceiptPrintService _receiptPrintService;
 
-  final openTickets   = <Ticket>[].obs;
+  TicketController(this._service, this._verifactuService, this._receiptPrintService);
+
+  final openTickets = <Ticket>[].obs;
   final parkedTickets = <Ticket>[].obs;
-  final activeTicket  = Rxn<Ticket>();
-  final isLoading     = false.obs;
+  final activeTicket = Rxn<Ticket>();
+  final isLoading = false.obs;
 
   @override
   void onInit() {
@@ -25,7 +32,7 @@ class TicketController extends GetxController {
   Future<void> loadTickets() async {
     try {
       isLoading.value = true;
-      openTickets.value   = await _service.getOpen();
+      openTickets.value = await _service.getOpen();
       parkedTickets.value = await _service.getParked();
     } catch (e) {
       Get.snackbar('Error', 'No se pudieron cargar los tickets');
@@ -34,23 +41,13 @@ class TicketController extends GetxController {
     }
   }
 
-  Future<void> selectOrCreateTicket({
-    int? tableNumber,
-    String? zone,
-    String? tableOrLabel,
-  }) async {
+  Future<void> selectOrCreateTicket({int? tableNumber, String? zone, String? tableOrLabel}) async {
     try {
-      final existing = openTickets.firstWhereOrNull(
-        (t) => t.tableNumber == tableNumber && t.zone == zone,
-      );
+      final existing = openTickets.firstWhereOrNull((t) => t.tableNumber == tableNumber && t.zone == zone);
       if (existing != null) {
         activeTicket.value = existing;
       } else {
-        final ticket = await _service.create(
-          tableNumber: tableNumber,
-          zone: zone,
-          tableOrLabel: tableOrLabel,
-        );
+        final ticket = await _service.create(tableNumber: tableNumber, zone: zone, tableOrLabel: tableOrLabel);
         activeTicket.value = ticket;
         await loadTickets();
       }
@@ -105,10 +102,12 @@ class TicketController extends GetxController {
   Future<void> payActive(PaymentMethod method) async {
     if (activeTicket.value == null) return;
     try {
+      final ticketForReceipt = _cloneTicket(activeTicket.value!);
       await _service.pay(activeTicket.value!, method);
       activeTicket.value = null;
       await loadTickets();
       Get.find<TicketHistoryController>().loadAll();
+      await _emitAndPrint(ticketForReceipt);
     } catch (e) {
       Get.snackbar('Error', 'No se pudo cobrar el ticket');
     }
@@ -126,9 +125,13 @@ class TicketController extends GetxController {
     }
   }
 
-  Future<void> payLines(List<int> lineIndices, PaymentMethod method) async {
+  Future<void> payLines(List<int> lineIndices, PaymentMethod method, {double? cashGiven, double? cashChange}) async {
     if (activeTicket.value == null) return;
     try {
+      final current = activeTicket.value!;
+      final isFullPayment = lineIndices.length == current.lines.length;
+      final ticketForReceipt = _cloneTicket(current);
+
       await _service.paySelectedLines(activeTicket.value!, lineIndices, method);
       final updated = await _service.getById(activeTicket.value!.id);
       if (updated == null || updated.status == TicketStatus.pagado) {
@@ -141,6 +144,9 @@ class TicketController extends GetxController {
       Get.find<ProductController>().loadAll();
       Get.find<ReportController>().loadLiveStats();
       Get.find<TicketHistoryController>().loadAll();
+      if (isFullPayment) {
+        await _emitAndPrint(ticketForReceipt, cashGiven: cashGiven, cashChange: cashChange);
+      }
     } catch (e) {
       Get.snackbar('Error', 'No se pudo procesar el pago');
     }
@@ -166,5 +172,76 @@ class TicketController extends GetxController {
       Get.snackbar('Error', 'No se pudieron cargar los tickets del día');
       return [];
     }
+  }
+
+  Future<void> _emitAndPrint(Ticket ticket, {double? cashGiven, double? cashChange}) async {
+    BackendInvoiceResponse invoiceForPrint = BackendInvoiceResponse(
+      id: ticket.uuid,
+      series: 'DEMO',
+      number: ticket.id,
+      type: 'SIMPLIFICADA',
+      status: 'LOCAL_DEMO',
+      issueDate: ticket.createdAt.toIso8601String(),
+      totalAmount: ticket.totalAmount,
+    );
+
+    FiscalStatusResponse? fiscalStatus;
+
+    try {
+      final InvoiceEmissionResult emission = await _verifactuService.emitTicket(ticket);
+      invoiceForPrint = emission.invoice;
+      fiscalStatus = emission.fiscalStatus;
+      Get.find<VerifactuController>().refreshInteractions();
+      Get.snackbar('Verifactu', 'Ticket fiscal enviado y preparado para imprimir.');
+    } catch (e) {
+      if (e is VerifactuLocalModeException) {
+        Get.snackbar('Verifactu', e.message);
+      } else {
+        final details = switch (e) {
+          VerifactuApiException() => e.toString(),
+          _ => e.toString(),
+        };
+        Get.snackbar('Verifactu', 'Fallo envio fiscal. Se genera PDF local demo. $details');
+      }
+    } finally {
+      try {
+        await _receiptPrintService.printTicket(
+          ticket: ticket,
+          invoice: invoiceForPrint,
+          fiscalStatus: fiscalStatus,
+          cashGiven: cashGiven,
+          cashChange: cashChange,
+        );
+      } catch (printError) {
+        Get.snackbar('Impresion', 'No se pudo abrir el PDF: $printError');
+      }
+    }
+  }
+
+  Ticket _cloneTicket(Ticket source) {
+    final cloned = Ticket()
+      ..id = source.id
+      ..uuid = source.uuid
+      ..createdAt = source.createdAt
+      ..status = source.status
+      ..paymentMethod = source.paymentMethod
+      ..totalAmount = source.totalAmount
+      ..tableNumber = source.tableNumber
+      ..tableOrLabel = source.tableOrLabel
+      ..isParked = source.isParked
+      ..zone = source.zone;
+
+    cloned.lines = source.lines
+        .map(
+          (line) => TicketLine()
+            ..productName = line.productName
+            ..productId = line.productId
+            ..quantity = line.quantity
+            ..priceAtMoment = line.priceAtMoment
+            ..totalLine = line.totalLine,
+        )
+        .toList();
+
+    return cloned;
   }
 }

@@ -13,32 +13,28 @@ import 'product_picker_widget.dart';
 /// Panel de gestión del ticket de una mesa.
 /// Reutilizable en Sala y en el TPV principal.
 class TicketPanelWidget extends StatefulWidget {
-  final int          tableNumber;
+  final int tableNumber;
   final VoidCallback onClose;
 
-  const TicketPanelWidget({
-    super.key,
-    required this.tableNumber,
-    required this.onClose,
-  });
+  const TicketPanelWidget({super.key, required this.tableNumber, required this.onClose});
 
   @override
   State<TicketPanelWidget> createState() => _TicketPanelWidgetState();
 }
 
 class _TicketPanelWidgetState extends State<TicketPanelWidget> {
-  final _ticketCtrl   = Get.find<TicketController>();
-  final _fmt          = AppFormats.currency;
-  bool  _showingPicker = false;
+  final _ticketCtrl = Get.find<TicketController>();
+  final _fmt = AppFormats.currency;
+  bool _showingPicker = false;
 
   // ── Añadir producto al ticket ─────────────────────────────────────────────
 
   Future<void> _addProduct(Product product) async {
     final line = TicketLine()
-      ..productName   = product.name
-      ..quantity      = 1
+      ..productName = product.name
+      ..quantity = 1
       ..priceAtMoment = product.price
-      ..totalLine     = product.price;
+      ..totalLine = product.price;
 
     await _ticketCtrl.addLineToActive(line);
     if (mounted) setState(() => _showingPicker = false);
@@ -53,8 +49,8 @@ class _TicketPanelWidgetState extends State<TicketPanelWidget> {
     PaymentDialogWidget.show(
       context,
       lines: List<TicketLine>.from(lines),
-      onConfirm: (lineIndices, method) async {
-        await _ticketCtrl.payLines(lineIndices, method);
+      onConfirm: (lineIndices, method, cashGiven, change) async {
+        await _ticketCtrl.payLines(lineIndices, method, cashGiven: cashGiven, cashChange: change);
         // Si el ticket quedó sin líneas (pagado) → cerrar panel
         if (_ticketCtrl.activeTicket.value == null) widget.onClose();
       },
@@ -68,14 +64,9 @@ class _TicketPanelWidgetState extends State<TicketPanelWidget> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Cancelar mesa'),
-        content: const Text(
-          '¿Seguro que quieres cancelar esta mesa? Se perderán todos los datos.',
-        ),
+        content: const Text('¿Seguro que quieres cancelar esta mesa? Se perderán todos los datos.'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('No'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('No')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.error,
@@ -106,23 +97,16 @@ class _TicketPanelWidgetState extends State<TicketPanelWidget> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              Icon(
-                Icons.table_restaurant,
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
+              Icon(Icons.table_restaurant, color: theme.colorScheme.onPrimaryContainer),
               const SizedBox(width: 8),
               Text(
                 'Mesa ${widget.tableNumber}',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  color: theme.colorScheme.onPrimaryContainer,
-                ),
+                style: theme.textTheme.headlineSmall?.copyWith(color: theme.colorScheme.onPrimaryContainer),
               ),
               const Spacer(),
               Obx(
                 () => Text(
-                  _fmt.format(
-                    _ticketCtrl.activeTicket.value?.totalAmount ?? 0,
-                  ),
+                  _fmt.format(_ticketCtrl.activeTicket.value?.totalAmount ?? 0),
                   style: theme.textTheme.headlineMedium?.copyWith(
                     color: theme.colorScheme.onPrimaryContainer,
                     fontWeight: FontWeight.bold,
@@ -142,17 +126,14 @@ class _TicketPanelWidgetState extends State<TicketPanelWidget> {
         // ── Líneas del ticket ─────────────────────────────────────────────
         Expanded(
           child: Obx(() {
-            final lines =
-                _ticketCtrl.activeTicket.value?.lines ?? [];
+            final lines = _ticketCtrl.activeTicket.value?.lines ?? [];
 
             if (lines.isEmpty) {
               return Center(
                 child: Text(
                   'Sin productos.\nPulsa Añadir para empezar.',
                   textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
               );
             }
@@ -161,14 +142,11 @@ class _TicketPanelWidgetState extends State<TicketPanelWidget> {
               itemCount: lines.length,
               separatorBuilder: (_, _) => const Divider(height: 1),
               itemBuilder: (_, i) => _LineTile(
-                line:       lines[i],
-                fmt:        _fmt,
-                onRemove:   () =>
-                    _ticketCtrl.removeLineFromActive(lines[i].productName),
-                onIncrease: () =>
-                    _ticketCtrl.changeLineQuantity(lines[i].productName, 1),
-                onDecrease: () =>
-                    _ticketCtrl.changeLineQuantity(lines[i].productName, -1),
+                line: lines[i],
+                fmt: _fmt,
+                onRemove: () => _ticketCtrl.removeLineFromActive(lines[i].productName),
+                onIncrease: () => _ticketCtrl.changeLineQuantity(lines[i].productName, 1),
+                onDecrease: () => _ticketCtrl.changeLineQuantity(lines[i].productName, -1),
               ),
             );
           }),
@@ -181,11 +159,7 @@ class _TicketPanelWidgetState extends State<TicketPanelWidget> {
             child: Column(
               children: [
                 const Divider(height: 1),
-                Expanded(
-                  child: ProductPickerWidget(
-                    onProductSelected: _addProduct,
-                  ),
-                ),
+                Expanded(child: ProductPickerWidget(onProductSelected: _addProduct)),
               ],
             ),
           ),
@@ -208,20 +182,14 @@ class _TicketPanelWidgetState extends State<TicketPanelWidget> {
                     child: narrow
                         ? OutlinedButton(
                             style: OutlinedButton.styleFrom(padding: btnPadding),
-                            onPressed: () =>
-                                setState(() => _showingPicker = !_showingPicker),
-                            child: Icon(_showingPicker
-                                ? Icons.keyboard_arrow_down
-                                : Icons.add),
+                            onPressed: () => setState(() => _showingPicker = !_showingPicker),
+                            child: Icon(_showingPicker ? Icons.keyboard_arrow_down : Icons.add),
                           )
                         : OutlinedButton.icon(
                             style: OutlinedButton.styleFrom(padding: btnPadding),
-                            icon: Icon(_showingPicker
-                                ? Icons.keyboard_arrow_down
-                                : Icons.add),
+                            icon: Icon(_showingPicker ? Icons.keyboard_arrow_down : Icons.add),
                             label: Text(_showingPicker ? 'Cerrar' : 'Añadir'),
-                            onPressed: () =>
-                                setState(() => _showingPicker = !_showingPicker),
+                            onPressed: () => setState(() => _showingPicker = !_showingPicker),
                           ),
                   ),
                   const SizedBox(width: 8),
@@ -275,7 +243,7 @@ class _TicketPanelWidgetState extends State<TicketPanelWidget> {
 // ── Fila de línea ─────────────────────────────────────────────────────────────
 
 class _LineTile extends StatelessWidget {
-  final TicketLine   line;
+  final TicketLine line;
   final NumberFormat fmt;
   final VoidCallback onRemove;
   final VoidCallback onIncrease;
@@ -296,29 +264,21 @@ class _LineTile extends StatelessWidget {
     return ListTile(
       dense: true,
       title: Text(line.productName, style: theme.textTheme.bodyMedium),
-      subtitle: Text(
-        fmt.format(line.priceAtMoment),
-        style: theme.textTheme.bodySmall,
-      ),
+      subtitle: Text(fmt.format(line.priceAtMoment), style: theme.textTheme.bodySmall),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           // ── Controles de cantidad ──────────────────────────────────
           IconButton(
-            icon:    const Icon(Icons.remove_circle_outline, size: 20),
-            color:   theme.colorScheme.error,
+            icon: const Icon(Icons.remove_circle_outline, size: 20),
+            color: theme.colorScheme.error,
             tooltip: 'Reducir',
             onPressed: onDecrease,
           ),
-          Text(
-            '${line.quantity}',
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Text('${line.quantity}', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
           IconButton(
-            icon:    const Icon(Icons.add_circle_outline, size: 20),
-            color:   theme.colorScheme.primary,
+            icon: const Icon(Icons.add_circle_outline, size: 20),
+            color: theme.colorScheme.primary,
             tooltip: 'Añadir',
             onPressed: onIncrease,
           ),
@@ -328,9 +288,7 @@ class _LineTile extends StatelessWidget {
             child: Text(
               fmt.format(line.totalLine),
               textAlign: TextAlign.right,
-              style: theme.textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -338,4 +296,3 @@ class _LineTile extends StatelessWidget {
     );
   }
 }
-

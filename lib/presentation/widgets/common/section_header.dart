@@ -7,12 +7,7 @@ class SectionHeader extends StatelessWidget {
   final VoidCallback? onRefresh;
   final Widget? trailing;
 
-  const SectionHeader({
-    super.key,
-    required this.title,
-    this.onRefresh,
-    this.trailing,
-  });
+  const SectionHeader({super.key, required this.title, this.onRefresh, this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -22,13 +17,8 @@ class SectionHeader extends StatelessWidget {
         children: [
           Text(title, style: Theme.of(context).textTheme.headlineMedium),
           const Spacer(),
-          if (onRefresh != null)
-            IconButton(
-              icon:    const Icon(Icons.refresh),
-              tooltip: 'Recargar',
-              onPressed: onRefresh,
-            ),
-          ?trailing,
+          if (onRefresh != null) IconButton(icon: const Icon(Icons.refresh), tooltip: 'Recargar', onPressed: onRefresh),
+          if (trailing != null) trailing!,
         ],
       ),
     );

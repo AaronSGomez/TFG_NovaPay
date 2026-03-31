@@ -573,7 +573,7 @@ class _TicketCorrectionSheetState extends State<_TicketCorrectionSheet> {
     await PaymentDialogWidget.show(
       context,
       lines: ticket.lines,
-      onConfirm: (lineIndices, method) async {
+      onConfirm: (lineIndices, method, cashGiven, change) async {
         await _ctrl.rechargeEditing(lineIndices, method);
         if (mounted) Navigator.of(context).pop();
       },

@@ -1,6 +1,8 @@
 // lib/presentation/widgets/profile/profile_form_widget.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 import '../../../data/models/user.dart';
 import '../../controllers/user_controller.dart';
@@ -9,8 +11,9 @@ import '../../controllers/user_controller.dart';
 /// Usado en [PersonalAreaSection] (admin) y [ProfilePage] (usuario).
 class ProfileFormWidget extends StatefulWidget {
   final User user;
+  final bool isAdminContext;
 
-  const ProfileFormWidget({super.key, required this.user});
+  const ProfileFormWidget({super.key, required this.user, this.isAdminContext = false});
 
   @override
   State<ProfileFormWidget> createState() => _ProfileFormWidgetState();
@@ -22,15 +25,25 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
   late final TextEditingController _phoneCtrl;
   late final TextEditingController _passwordCtrl;
   late final TextEditingController _emailCtrl;
+  late final TextEditingController _companyNameCtrl;
+  late final TextEditingController _taxIdCtrl;
+  late final TextEditingController _addressCtrl;
+
+  late String? _logoPath; // Ruta del logo
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
     _usernameCtrl = TextEditingController(text: widget.user.username ?? '');
-    _lastNameCtrl = TextEditingController(text: widget.user.lastName  ?? '');
-    _phoneCtrl    = TextEditingController(text: widget.user.phone     ?? '');
-    _emailCtrl    = TextEditingController(text: widget.user.email     ?? '');
+    _lastNameCtrl = TextEditingController(text: widget.user.lastName ?? '');
+    _phoneCtrl = TextEditingController(text: widget.user.phone ?? '');
+    _emailCtrl = TextEditingController(text: widget.user.email ?? '');
     _passwordCtrl = TextEditingController();
+    _companyNameCtrl = TextEditingController(text: widget.user.companyName ?? '');
+    _taxIdCtrl = TextEditingController(text: widget.user.taxId ?? '');
+    _addressCtrl = TextEditingController(text: widget.user.address ?? '');
+    _logoPath = widget.user.logoPath;
   }
 
   @override
@@ -40,6 +53,9 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
     _phoneCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
+    _companyNameCtrl.dispose();
+    _taxIdCtrl.dispose();
+    _addressCtrl.dispose();
     super.dispose();
   }
 
@@ -48,11 +64,22 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
     return name[0].toUpperCase();
   }
 
+  bool get _showCompanyFields => widget.isAdminContext || widget.user.role == 'admin';
+
   Future<void> _save() async {
     widget.user
       ..username = _usernameCtrl.text.trim()
       ..lastName = _lastNameCtrl.text.trim()
-      ..phone    = _phoneCtrl.text.trim();
+      ..phone = _phoneCtrl.text.trim();
+
+    // Guardar campos de empresa si el usuario es admin y son editables
+    if (_showCompanyFields && !widget.user.backendEditable) {
+      widget.user
+        ..companyName = _companyNameCtrl.text.trim()
+        ..taxId = _taxIdCtrl.text.trim()
+        ..address = _addressCtrl.text.trim()
+        ..logoPath = _logoPath;
+    }
 
     if (_passwordCtrl.text.isNotEmpty) {
       widget.user.password = _passwordCtrl.text;
@@ -65,9 +92,17 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
     _passwordCtrl.clear();
     setState(() {});
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Datos actualizados correctamente')),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Datos actualizados correctamente')));
+  }
+
+  Future<void> _pickLogo() async {
+    final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery);
+    if (pickedFile == null) return;
+    setState(() => _logoPath = pickedFile.path);
+  }
+
+  void _removeLogo() {
+    setState(() => _logoPath = null);
   }
 
   @override
@@ -90,23 +125,14 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
                   backgroundColor: theme.colorScheme.primary,
                   child: Text(
                     _initial,
-                    style: const TextStyle(
-                      fontSize: 40,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontSize: 40, color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  widget.user.username ?? widget.user.email ?? '',
-                  style: theme.textTheme.headlineMedium,
-                ),
+                Text(widget.user.username ?? widget.user.email ?? '', style: theme.textTheme.headlineMedium),
                 Text(
                   widget.user.email ?? '',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 32),
 
@@ -115,28 +141,19 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: _usernameCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre',
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
+                  decoration: const InputDecoration(labelText: 'Nombre', prefixIcon: Icon(Icons.person_outline)),
                   textCapitalization: TextCapitalization.words,
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _lastNameCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Apellidos',
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
+                  decoration: const InputDecoration(labelText: 'Apellidos', prefixIcon: Icon(Icons.person_outline)),
                   textCapitalization: TextCapitalization.words,
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _phoneCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Teléfono',
-                    prefixIcon: Icon(Icons.phone_outlined),
-                  ),
+                  decoration: const InputDecoration(labelText: 'Teléfono', prefixIcon: Icon(Icons.phone_outlined)),
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 12),
@@ -164,6 +181,106 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
                     prefixIcon: Icon(Icons.lock_outline),
                   ),
                 ),
+
+                // ── Datos de empresa (solo admin) ──────────────────────────
+                if (_showCompanyFields) ...[
+                  const SizedBox(height: 32),
+                  _SectionLabel(label: 'Datos de empresa', theme: theme),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _companyNameCtrl,
+                    readOnly: widget.user.backendEditable,
+                    decoration: InputDecoration(
+                      labelText: 'Nombre empresa',
+                      prefixIcon: const Icon(Icons.business_outlined),
+                      filled: widget.user.backendEditable,
+                      fillColor: widget.user.backendEditable ? theme.colorScheme.surfaceContainerHighest : null,
+                      suffixIcon: widget.user.backendEditable ? const Icon(Icons.lock_outline, size: 18) : null,
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _taxIdCtrl,
+                    readOnly: widget.user.backendEditable,
+                    decoration: InputDecoration(
+                      labelText: 'Razon social (CIF/NIF)',
+                      prefixIcon: const Icon(Icons.badge_outlined),
+                      filled: widget.user.backendEditable,
+                      fillColor: widget.user.backendEditable ? theme.colorScheme.surfaceContainerHighest : null,
+                      suffixIcon: widget.user.backendEditable ? const Icon(Icons.lock_outline, size: 18) : null,
+                    ),
+                    textCapitalization: TextCapitalization.characters,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _addressCtrl,
+                    readOnly: widget.user.backendEditable,
+                    decoration: InputDecoration(
+                      labelText: 'Direccion',
+                      prefixIcon: const Icon(Icons.location_on_outlined),
+                      filled: widget.user.backendEditable,
+                      fillColor: widget.user.backendEditable ? theme.colorScheme.surfaceContainerHighest : null,
+                      suffixIcon: widget.user.backendEditable ? const Icon(Icons.lock_outline, size: 18) : null,
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Logo', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  if (_logoPath != null && _logoPath!.isNotEmpty)
+                    Column(
+                      children: [
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: theme.colorScheme.outline),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(7),
+                            child: Image.file(File(_logoPath!), fit: BoxFit.contain),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: widget.user.backendEditable ? null : _pickLogo,
+                              icon: const Icon(Icons.image_outlined),
+                              label: const Text('Cambiar'),
+                            ),
+                            const SizedBox(width: 8),
+                            OutlinedButton.icon(
+                              onPressed: widget.user.backendEditable ? null : _removeLogo,
+                              icon: const Icon(Icons.delete_outline),
+                              label: const Text('Quitar'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                  else
+                    OutlinedButton.icon(
+                      onPressed: widget.user.backendEditable ? null : _pickLogo,
+                      icon: const Icon(Icons.upload_file_outlined),
+                      label: const Text('Cargar logo'),
+                    ),
+                  if (widget.user.backendEditable)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Estos campos estan bloqueados por el backend',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                ],
                 const SizedBox(height: 28),
 
                 // ── Guardar ───────────────────────────────────────────────

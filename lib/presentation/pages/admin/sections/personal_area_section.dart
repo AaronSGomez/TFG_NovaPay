@@ -11,6 +11,6 @@ class PersonalAreaSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ProfileFormWidget(user: user);
+    return ProfileFormWidget(user: user, isAdminContext: true);
   }
 }
