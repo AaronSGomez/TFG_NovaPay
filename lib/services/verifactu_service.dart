@@ -47,6 +47,100 @@ class VerifactuBackendState {
   });
 }
 
+class VerifactuRegistrationResult {
+  final String message;
+  final String? companyId;
+  final String? clientId;
+  final String? planCode;
+  final String? billingCycle;
+  final String? baseAmount;
+  final String? invoiceLimit;
+  final String? overagePerInvoice;
+
+  const VerifactuRegistrationResult({
+    required this.message,
+    this.companyId,
+    this.clientId,
+    this.planCode,
+    this.billingCycle,
+    this.baseAmount,
+    this.invoiceLimit,
+    this.overagePerInvoice,
+  });
+
+  factory VerifactuRegistrationResult.fromJson(Map<String, dynamic> json) {
+    return VerifactuRegistrationResult(
+      message: (json['message'] as String?) ?? 'Registro backend completado',
+      companyId: json['companyId'] as String?,
+      clientId: json['clientId'] as String?,
+      planCode: json['planCode'] as String?,
+      billingCycle: json['billingCycle'] as String?,
+      baseAmount: json['baseAmount'] as String?,
+      invoiceLimit: json['invoiceLimit'] as String?,
+      overagePerInvoice: json['overagePerInvoice'] as String?,
+    );
+  }
+}
+
+class VerifactuSubscriptionSummary {
+  final String clientId;
+  final String companyId;
+  final String planCode;
+  final String billingCycle;
+  final String periodStart;
+  final String periodEnd;
+  final int serviceDaysRemaining;
+  final String paymentStatus;
+  final int includedInvoices;
+  final int consumedInvoices;
+  final int remainingInvoices;
+  final int overageInvoices;
+  final String baseAmount;
+  final String overagePerInvoice;
+  final String estimatedOverage;
+  final String estimatedTotal;
+
+  const VerifactuSubscriptionSummary({
+    required this.clientId,
+    required this.companyId,
+    required this.planCode,
+    required this.billingCycle,
+    required this.periodStart,
+    required this.periodEnd,
+    required this.serviceDaysRemaining,
+    required this.paymentStatus,
+    required this.includedInvoices,
+    required this.consumedInvoices,
+    required this.remainingInvoices,
+    required this.overageInvoices,
+    required this.baseAmount,
+    required this.overagePerInvoice,
+    required this.estimatedOverage,
+    required this.estimatedTotal,
+  });
+
+  factory VerifactuSubscriptionSummary.fromJson(Map<String, dynamic> json) {
+    return VerifactuSubscriptionSummary(
+      clientId: (json['clientId'] as String?) ?? '',
+      companyId: (json['companyId'] as String?) ?? '',
+      planCode: (json['planCode'] as String?) ?? '',
+      billingCycle: (json['billingCycle'] as String?) ?? '',
+      periodStart: (json['periodStart'] as String?) ?? '',
+      periodEnd: (json['periodEnd'] as String?) ?? '',
+      serviceDaysRemaining: (json['serviceDaysRemaining'] as num?)?.toInt() ?? 0,
+      paymentStatus: (json['paymentStatus'] as String?) ?? 'DESCONOCIDO',
+      includedInvoices: (json['includedInvoices'] as num?)?.toInt() ?? 0,
+      consumedInvoices: (json['consumedInvoices'] as num?)?.toInt() ?? 0,
+      remainingInvoices: (json['remainingInvoices'] as num?)?.toInt() ?? 0,
+      overageInvoices: (json['overageInvoices'] as num?)?.toInt() ?? 0,
+      baseAmount: (json['baseAmount'] as String?) ?? '0.00',
+      overagePerInvoice: (json['overagePerInvoice'] as String?) ?? '0.00',
+      estimatedOverage: (json['estimatedOverage'] as String?) ?? '0.00',
+      estimatedTotal: (json['estimatedTotal'] as String?) ?? '0.00',
+    );
+  }
+}
+
 class VerifactuService {
   static const String _baseUrl = String.fromEnvironment('NOVAPAY_BACKEND_URL', defaultValue: 'http://localhost:8080');
   static const String _clientId = String.fromEnvironment('NOVAPAY_CLIENT_ID', defaultValue: 'novapay-client');
@@ -75,8 +169,16 @@ class VerifactuService {
 
   Future<VerifactuBackendState> getBackendState() async {
     final config = await _configService.getConfig();
-    final registered = config.verifactuRegistered;
+    final hasClientId = config.verifactuClientId != null && config.verifactuClientId!.trim().isNotEmpty;
+    final registered = config.verifactuRegistered && hasClientId;
     if (!registered) {
+      if (config.verifactuRegistered) {
+        config
+          ..verifactuRegistered = false
+          ..verifactuClientId = null
+          ..verifactuLastAuthAt = null;
+        await _configService.saveConfig(config);
+      }
       return const VerifactuBackendState(
         registered: false,
         canUseBackend: false,
@@ -87,31 +189,46 @@ class VerifactuService {
     }
 
     final lastAuth = config.verifactuLastAuthAt;
-    final requiresAuth = lastAuth == null || DateTime.now().difference(lastAuth) > _maxAuthAge;
+    final hasLocalToken = hasActiveJwtSession;
+    final authExpired = lastAuth == null || DateTime.now().difference(lastAuth) > _maxAuthAge;
+    final requiresAuth = !hasLocalToken || authExpired;
 
     return VerifactuBackendState(
       registered: true,
-      canUseBackend: !requiresAuth,
+      canUseBackend: hasLocalToken && !authExpired,
       requiresAuth: requiresAuth,
       isNewSystem: config.verifactuIsNewSystem,
       lastAuthAt: lastAuth,
     );
   }
 
-  Future<void> registerBackendUser({
+  Future<VerifactuRegistrationResult> registerBackendUser({
     required String companyName,
     required String taxId,
     required String address,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+    required String planCode,
+    required String billingCycle,
     required bool isNewSystem,
     String? clientHash,
   }) async {
+    final normalizedHash = clientHash?.trim();
     final payload = {
       'companyName': companyName,
       'taxId': taxId,
       'address': address,
-      'clientHash': clientHash,
+      'email': email,
+      'password': password,
+      'passwordConfirmation': passwordConfirmation,
+      'planCode': planCode,
+      'billingCycle': billingCycle,
       'isNewSystem': isNewSystem,
     };
+    if (!isNewSystem && normalizedHash != null && normalizedHash.isNotEmpty) {
+      payload['clientHash'] = normalizedHash;
+    }
 
     final response = await _httpClient.post(
       Uri.parse('$_baseUrl/api/v1/verifactu/register'),
@@ -127,14 +244,19 @@ class VerifactuService {
       );
     }
 
+    final responseJson = decodeJsonObject(response.body);
+    final registrationResult = VerifactuRegistrationResult.fromJson(responseJson);
+
     final cfg = await _configService.getConfig();
     cfg
       ..verifactuRegistered = true
       ..verifactuIsNewSystem = isNewSystem
-      ..verifactuClientHash = (clientHash != null && clientHash.isNotEmpty) ? clientHash : cfg.verifactuClientHash
+      ..verifactuClientHash = password
       ..verifactuClientId = taxId
       ..verifactuLastAuthAt = null;
     await _configService.saveConfig(cfg);
+
+    return registrationResult;
   }
 
   Future<void> authenticateBackend() async {
@@ -146,6 +268,159 @@ class VerifactuService {
     await _ensureToken(forceRefresh: true);
     cfg.verifactuLastAuthAt = DateTime.now();
     await _configService.saveConfig(cfg);
+  }
+
+  Future<void> authenticateBackendWithCredentials({
+    required String email,
+    required String password,
+    String? fallbackClientId,
+  }) async {
+    final response = await _httpClient.post(
+      Uri.parse('$_baseUrl/api/v1/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email.trim(), 'password': password}),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw VerifactuApiException(
+        'No se pudo iniciar sesión con email y contraseña',
+        statusCode: response.statusCode,
+        responseBody: response.body,
+      );
+    }
+
+    final body = decodeJsonObject(response.body);
+    final token = (body['access_token'] as String?) ?? (body['accessToken'] as String?);
+    final expiresIn = ((body['expires_in'] as num?) ?? (body['expiresIn'] as num?) ?? 3600).toInt();
+    final clientIdFromLogin =
+        ((body['clientId'] as String?) ??
+                (body['client_id'] as String?) ??
+                (body['taxId'] as String?) ??
+                (body['tax_id'] as String?))
+            ?.trim();
+    final fallback = fallbackClientId?.trim();
+    final resolvedClientId = (clientIdFromLogin != null && clientIdFromLogin.isNotEmpty)
+        ? clientIdFromLogin
+        : ((fallback != null && fallback.isNotEmpty) ? fallback : null);
+    if (token == null || token.isEmpty) {
+      throw Exception('Token JWT vacío en respuesta de login por email.');
+    }
+
+    _accessToken = token;
+    _tokenExpiresAt = DateTime.now().add(Duration(seconds: expiresIn - 5));
+
+    final cfg = await _configService.getConfig();
+    cfg
+      ..verifactuClientId = (resolvedClientId != null && resolvedClientId.isNotEmpty)
+          ? resolvedClientId
+          : cfg.verifactuClientId
+      ..verifactuRegistered = (resolvedClientId != null && resolvedClientId.isNotEmpty) ? true : cfg.verifactuRegistered
+      ..verifactuClientHash = password
+      ..verifactuLastAuthAt = DateTime.now();
+
+    if (cfg.verifactuClientId == null || cfg.verifactuClientId!.trim().isEmpty) {
+      cfg.verifactuRegistered = false;
+    }
+
+    await _configService.saveConfig(cfg);
+  }
+
+  Future<void> requestPasswordRecovery({required String email}) async {
+    final response = await _httpClient.post(
+      Uri.parse('$_baseUrl/api/v1/auth/forgot-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email.trim()}),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw VerifactuApiException(
+        'No se pudo iniciar la recuperación de contraseña',
+        statusCode: response.statusCode,
+        responseBody: response.body,
+      );
+    }
+  }
+
+  Future<void> logoutBackend() async {
+    _accessToken = null;
+    _tokenExpiresAt = null;
+
+    final cfg = await _configService.getConfig();
+    cfg.verifactuLastAuthAt = null;
+    await _configService.saveConfig(cfg);
+  }
+
+  Future<void> resetLocalVerifactuState() async {
+    _accessToken = null;
+    _tokenExpiresAt = null;
+
+    final cfg = await _configService.getConfig();
+    cfg
+      ..verifactuRegistered = false
+      ..verifactuIsNewSystem = false
+      ..verifactuClientId = null
+      ..verifactuClientHash = null
+      ..verifactuLastAuthAt = null;
+    await _configService.saveConfig(cfg);
+  }
+
+  bool get hasActiveJwtSession {
+    if (_accessToken == null || _tokenExpiresAt == null) {
+      return false;
+    }
+    return DateTime.now().isBefore(_tokenExpiresAt!);
+  }
+
+  Future<void> changePassword({required String currentPassword, required String newPassword}) async {
+    final cfg = await _configService.getConfig();
+    final clientId = cfg.verifactuClientId;
+    if (clientId == null || clientId.trim().isEmpty) {
+      throw const VerifactuLocalModeException('No hay clientId configurado para cambiar contraseña.');
+    }
+
+    await _ensureToken(forceRefresh: true);
+
+    final response = await _httpClient.post(
+      Uri.parse('$_baseUrl/api/v1/auth/change-password'),
+      headers: {..._jsonAuthHeaders, 'X-Client-Id': clientId.trim()},
+      body: jsonEncode({'currentPassword': currentPassword, 'newPassword': newPassword, 'temporalPassword': null}),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw VerifactuApiException(
+        'No se pudo cambiar la contraseña',
+        statusCode: response.statusCode,
+        responseBody: response.body,
+      );
+    }
+
+    cfg.verifactuClientHash = newPassword;
+    await _configService.saveConfig(cfg);
+    _accessToken = null;
+    _tokenExpiresAt = null;
+  }
+
+  Future<VerifactuSubscriptionSummary> fetchSubscriptionSummary() async {
+    final cfg = await _configService.getConfig();
+    final clientId = cfg.verifactuClientId;
+    if (clientId == null || clientId.trim().isEmpty) {
+      throw const VerifactuLocalModeException('No hay clientId configurado para consultar consumo.');
+    }
+
+    final response = await _httpClient.get(
+      Uri.parse('$_baseUrl/api/v1/verifactu/subscription/${clientId.trim()}'),
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw VerifactuApiException(
+        'No se pudo obtener el resumen de suscripción',
+        statusCode: response.statusCode,
+        responseBody: response.body,
+      );
+    }
+
+    return VerifactuSubscriptionSummary.fromJson(decodeJsonObject(response.body));
   }
 
   Future<InvoiceEmissionResult> emitTicket(Ticket ticket) async {

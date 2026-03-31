@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 import '../../../data/models/user.dart';
+import '../../../services/config_service.dart';
 import '../../controllers/user_controller.dart';
 
 /// Widget reutilizable de edición de perfil.
@@ -12,8 +13,9 @@ import '../../controllers/user_controller.dart';
 class ProfileFormWidget extends StatefulWidget {
   final User user;
   final bool isAdminContext;
+  final VoidCallback? onOpenVerifactu;
 
-  const ProfileFormWidget({super.key, required this.user, this.isAdminContext = false});
+  const ProfileFormWidget({super.key, required this.user, this.isAdminContext = false, this.onOpenVerifactu});
 
   @override
   State<ProfileFormWidget> createState() => _ProfileFormWidgetState();
@@ -30,6 +32,7 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
   late final TextEditingController _addressCtrl;
 
   late String? _logoPath; // Ruta del logo
+  bool _hasLocalVerifactuLink = false;
   final ImagePicker _imagePicker = ImagePicker();
 
   @override
@@ -44,6 +47,7 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
     _taxIdCtrl = TextEditingController(text: widget.user.taxId ?? '');
     _addressCtrl = TextEditingController(text: widget.user.address ?? '');
     _logoPath = widget.user.logoPath;
+    _loadLocalVerifactuLock();
   }
 
   @override
@@ -65,6 +69,25 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
   }
 
   bool get _showCompanyFields => widget.isAdminContext || widget.user.role == 'admin';
+  bool get _fiscalFieldsLocked => widget.user.backendEditable || _hasLocalVerifactuLink;
+
+  Future<void> _loadLocalVerifactuLock() async {
+    try {
+      final cfg = await Get.find<ConfigService>().getConfig();
+      final linkedToVerifactu =
+          cfg.verifactuRegistered ||
+          (cfg.verifactuClientId != null && cfg.verifactuClientId!.trim().isNotEmpty) ||
+          cfg.verifactuLastAuthAt != null;
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _hasLocalVerifactuLink = linkedToVerifactu;
+      });
+    } catch (_) {
+      // Si no se puede leer configuración, mantenemos el bloqueo backendEditable existente.
+    }
+  }
 
   Future<void> _save() async {
     widget.user
@@ -72,13 +95,15 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
       ..lastName = _lastNameCtrl.text.trim()
       ..phone = _phoneCtrl.text.trim();
 
-    // Guardar campos de empresa si el usuario es admin y son editables
-    if (_showCompanyFields && !widget.user.backendEditable) {
+    // Guardar campos de empresa solo si están editables; el logo se permite siempre.
+    if (_showCompanyFields && !_fiscalFieldsLocked) {
       widget.user
         ..companyName = _companyNameCtrl.text.trim()
         ..taxId = _taxIdCtrl.text.trim()
-        ..address = _addressCtrl.text.trim()
-        ..logoPath = _logoPath;
+        ..address = _addressCtrl.text.trim();
+    }
+    if (_showCompanyFields) {
+      widget.user.logoPath = _logoPath;
     }
 
     if (_passwordCtrl.text.isNotEmpty) {
@@ -189,39 +214,39 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: _companyNameCtrl,
-                    readOnly: widget.user.backendEditable,
+                    readOnly: _fiscalFieldsLocked,
                     decoration: InputDecoration(
                       labelText: 'Nombre empresa',
                       prefixIcon: const Icon(Icons.business_outlined),
-                      filled: widget.user.backendEditable,
-                      fillColor: widget.user.backendEditable ? theme.colorScheme.surfaceContainerHighest : null,
-                      suffixIcon: widget.user.backendEditable ? const Icon(Icons.lock_outline, size: 18) : null,
+                      filled: _fiscalFieldsLocked,
+                      fillColor: _fiscalFieldsLocked ? theme.colorScheme.surfaceContainerHighest : null,
+                      suffixIcon: _fiscalFieldsLocked ? const Icon(Icons.lock_outline, size: 18) : null,
                     ),
                     textCapitalization: TextCapitalization.words,
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _taxIdCtrl,
-                    readOnly: widget.user.backendEditable,
+                    readOnly: _fiscalFieldsLocked,
                     decoration: InputDecoration(
                       labelText: 'Razon social (CIF/NIF)',
                       prefixIcon: const Icon(Icons.badge_outlined),
-                      filled: widget.user.backendEditable,
-                      fillColor: widget.user.backendEditable ? theme.colorScheme.surfaceContainerHighest : null,
-                      suffixIcon: widget.user.backendEditable ? const Icon(Icons.lock_outline, size: 18) : null,
+                      filled: _fiscalFieldsLocked,
+                      fillColor: _fiscalFieldsLocked ? theme.colorScheme.surfaceContainerHighest : null,
+                      suffixIcon: _fiscalFieldsLocked ? const Icon(Icons.lock_outline, size: 18) : null,
                     ),
                     textCapitalization: TextCapitalization.characters,
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _addressCtrl,
-                    readOnly: widget.user.backendEditable,
+                    readOnly: _fiscalFieldsLocked,
                     decoration: InputDecoration(
                       labelText: 'Direccion',
                       prefixIcon: const Icon(Icons.location_on_outlined),
-                      filled: widget.user.backendEditable,
-                      fillColor: widget.user.backendEditable ? theme.colorScheme.surfaceContainerHighest : null,
-                      suffixIcon: widget.user.backendEditable ? const Icon(Icons.lock_outline, size: 18) : null,
+                      filled: _fiscalFieldsLocked,
+                      fillColor: _fiscalFieldsLocked ? theme.colorScheme.surfaceContainerHighest : null,
+                      suffixIcon: _fiscalFieldsLocked ? const Icon(Icons.lock_outline, size: 18) : null,
                     ),
                     textCapitalization: TextCapitalization.words,
                     maxLines: 2,
@@ -249,13 +274,13 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             OutlinedButton.icon(
-                              onPressed: widget.user.backendEditable ? null : _pickLogo,
+                              onPressed: _pickLogo,
                               icon: const Icon(Icons.image_outlined),
                               label: const Text('Cambiar'),
                             ),
                             const SizedBox(width: 8),
                             OutlinedButton.icon(
-                              onPressed: widget.user.backendEditable ? null : _removeLogo,
+                              onPressed: _removeLogo,
                               icon: const Icon(Icons.delete_outline),
                               label: const Text('Quitar'),
                             ),
@@ -265,19 +290,32 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
                     )
                   else
                     OutlinedButton.icon(
-                      onPressed: widget.user.backendEditable ? null : _pickLogo,
+                      onPressed: _pickLogo,
                       icon: const Icon(Icons.upload_file_outlined),
                       label: const Text('Cargar logo'),
                     ),
-                  if (widget.user.backendEditable)
+                  if (_fiscalFieldsLocked)
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        'Estos campos estan bloqueados por el backend',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontStyle: FontStyle.italic,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'CIF y datos fiscales bloqueados por cumplimiento legal. Gestiona incidencias en Verifactu y contacta con soporte@novapay.es.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                          if (widget.isAdminContext && widget.onOpenVerifactu != null) ...[
+                            const SizedBox(height: 8),
+                            OutlinedButton.icon(
+                              onPressed: widget.onOpenVerifactu,
+                              icon: const Icon(Icons.verified_user),
+                              label: const Text('Abrir pestaña Verifactu'),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                 ],
