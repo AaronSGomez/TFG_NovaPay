@@ -195,10 +195,7 @@ class VerifactuService {
     if (_baseUrlFromEnv.trim().isNotEmpty) {
       return _baseUrlFromEnv.trim();
     }
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8080';
-    }
-    return 'http://localhost:8080';
+    return 'https://levelup42.duckdns.org';
   }
 
   Future<VerifactuBackendState> getBackendState() async {
@@ -632,6 +629,29 @@ class VerifactuService {
     }
   }
 
+  Future<void> cancelInvoice({required String invoiceId, required String reason}) async {
+    final state = await getBackendState();
+    if (!state.canUseBackend && !hasActiveJwtSession) {
+      throw const VerifactuLocalModeException('No hay sesión activa en backend para anular facturas.');
+    }
+
+    await _ensureToken();
+
+    final response = await _httpClient.post(
+      Uri.parse('$_baseUrl/api/v1/invoices/$invoiceId/cancel'),
+      headers: _jsonAuthHeaders,
+      body: jsonEncode({'invoiceId': invoiceId, 'reason': reason.trim()}),
+    );
+
+    if (response.statusCode != 200) {
+      throw VerifactuApiException(
+        'Error al anular factura para subsanación',
+        statusCode: response.statusCode,
+        responseBody: response.body,
+      );
+    }
+  }
+
   Future<VerifactuCompanyIdentity?> refreshCompanyIdentityFromBackend() async {
     final cfg = await _configService.getConfig();
     final clientId = cfg.verifactuClientId?.trim();
@@ -771,10 +791,12 @@ class VerifactuService {
 
     var changed = false;
 
+    // El nombre comercial (titulo del ticket) lo define el admin y no se debe
+    // sobrescribir con la identidad fiscal devuelta por Verifactu.
     if (normalizedCompanyName != null &&
         normalizedCompanyName.isNotEmpty &&
-        business.businessName != normalizedCompanyName) {
-      business.businessName = normalizedCompanyName;
+        business.fiscalName != normalizedCompanyName) {
+      business.fiscalName = normalizedCompanyName;
       changed = true;
     }
 

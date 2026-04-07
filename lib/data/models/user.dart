@@ -14,6 +14,7 @@ class User {
   String? email;
 
   String? phone;
+  String? ticketDisplayName;
 
   // 'admin' o 'user'
   String role = 'user';

@@ -28,12 +28,15 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
   late final TextEditingController _phoneCtrl;
   late final TextEditingController _passwordCtrl;
   late final TextEditingController _emailCtrl;
+  late final TextEditingController _ticketDisplayNameCtrl;
   late final TextEditingController _companyNameCtrl;
+  late final TextEditingController _fiscalNameCtrl;
   late final TextEditingController _taxIdCtrl;
   late final TextEditingController _addressCtrl;
 
   late String? _logoPath; // Ruta del logo
   bool _hasLocalVerifactuLink = false;
+  bool _showPassword = false;
   final ImagePicker _imagePicker = ImagePicker();
   BusinessConfig? _businessConfig;
 
@@ -45,7 +48,9 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
     _phoneCtrl = TextEditingController(text: widget.user.phone ?? '');
     _emailCtrl = TextEditingController(text: widget.user.email ?? '');
     _passwordCtrl = TextEditingController();
+    _ticketDisplayNameCtrl = TextEditingController(text: widget.user.ticketDisplayName ?? '');
     _companyNameCtrl = TextEditingController(text: widget.user.companyName ?? '');
+    _fiscalNameCtrl = TextEditingController();
     _taxIdCtrl = TextEditingController(text: widget.user.taxId ?? '');
     _addressCtrl = TextEditingController(text: widget.user.address ?? '');
     _logoPath = widget.user.logoPath;
@@ -68,6 +73,9 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
 
       if (business.businessName.trim().isNotEmpty) {
         _companyNameCtrl.text = business.businessName;
+      }
+      if (business.fiscalName.trim().isNotEmpty) {
+        _fiscalNameCtrl.text = business.fiscalName;
       }
       if (business.cifNif.trim().isNotEmpty) {
         _taxIdCtrl.text = business.cifNif;
@@ -94,7 +102,9 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
     _phoneCtrl.dispose();
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
+    _ticketDisplayNameCtrl.dispose();
     _companyNameCtrl.dispose();
+    _fiscalNameCtrl.dispose();
     _taxIdCtrl.dispose();
     _addressCtrl.dispose();
     super.dispose();
@@ -130,21 +140,24 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
     widget.user
       ..username = _usernameCtrl.text.trim()
       ..lastName = _lastNameCtrl.text.trim()
-      ..phone = _phoneCtrl.text.trim();
+      ..phone = _phoneCtrl.text.trim()
+      ..email = _emailCtrl.text.trim()
+      ..ticketDisplayName = _ticketDisplayNameCtrl.text.trim();
 
-    // Guardar campos de empresa solo si están editables; el logo se permite siempre.
-    if (_showCompanyFields && !_fiscalFieldsLocked) {
+    // Los datos de empresa se reflejan en ticket; CIF/NIF se bloquea al enlazar Verifactu.
+    if (_showCompanyFields) {
       widget.user
         ..companyName = _companyNameCtrl.text.trim()
-        ..taxId = _taxIdCtrl.text.trim()
-        ..address = _addressCtrl.text.trim();
+        ..taxId = _fiscalFieldsLocked ? widget.user.taxId : _taxIdCtrl.text.trim()
+        ..address = _fiscalFieldsLocked ? widget.user.address : _addressCtrl.text.trim();
 
       final configService = Get.find<ConfigService>();
       final business = _businessConfig ?? (await configService.getBusinessConfig()) ?? BusinessConfig();
       business
         ..businessName = _companyNameCtrl.text.trim()
-        ..cifNif = _taxIdCtrl.text.trim()
-        ..address = _addressCtrl.text.trim()
+        ..fiscalName = _fiscalFieldsLocked ? business.fiscalName : _fiscalNameCtrl.text.trim()
+        ..cifNif = _fiscalFieldsLocked ? business.cifNif : _taxIdCtrl.text.trim()
+        ..address = _fiscalFieldsLocked ? business.address : _addressCtrl.text.trim()
         ..logoPath = _logoPath;
       await configService.saveBusinessConfig(business);
       _businessConfig = business;
@@ -230,15 +243,24 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
                 ),
                 const SizedBox(height: 12),
                 TextField(
+                  controller: _ticketDisplayNameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre a mostrar en ticket',
+                    prefixIcon: Icon(Icons.receipt_long_outlined),
+                    helperText: 'Si lo dejas vacío se usará tu nombre y apellidos.',
+                  ),
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 12),
+                TextField(
                   controller: _emailCtrl,
-                  readOnly: true,
+                  readOnly: false,
                   decoration: InputDecoration(
                     labelText: 'Email',
                     prefixIcon: const Icon(Icons.email_outlined),
-                    suffixIcon: const Icon(Icons.lock_outline, size: 18),
-                    filled: true,
-                    fillColor: theme.colorScheme.surfaceContainerHighest,
+                    suffixIcon: const Icon(Icons.edit_outlined, size: 18),
                   ),
+                  keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 32),
 
@@ -247,10 +269,15 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: _passwordCtrl,
-                  obscureText: true,
-                  decoration: const InputDecoration(
+                  obscureText: !_showPassword,
+                  decoration: InputDecoration(
                     labelText: 'Nueva contraseña (opcional)',
-                    prefixIcon: Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      onPressed: () => setState(() => _showPassword = !_showPassword),
+                      icon: Icon(_showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                      tooltip: _showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña',
+                    ),
                   ),
                 ),
 
@@ -258,13 +285,30 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
                 if (_showCompanyFields) ...[
                   const SizedBox(height: 32),
                   _SectionLabel(label: 'Datos de empresa', theme: theme),
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Estos campos se usan para imprimir el ticket.',
+                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _companyNameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre del bar (título ticket)',
+                      prefixIcon: const Icon(Icons.business_outlined),
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _fiscalNameCtrl,
                     readOnly: _fiscalFieldsLocked,
                     decoration: InputDecoration(
-                      labelText: 'Nombre empresa',
-                      prefixIcon: const Icon(Icons.business_outlined),
+                      labelText: 'Nombre fiscal (debajo, pequeño)',
+                      prefixIcon: const Icon(Icons.description_outlined),
                       filled: _fiscalFieldsLocked,
                       fillColor: _fiscalFieldsLocked ? theme.colorScheme.surfaceContainerHighest : null,
                       suffixIcon: _fiscalFieldsLocked ? const Icon(Icons.lock_outline, size: 18) : null,
@@ -276,7 +320,7 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
                     controller: _taxIdCtrl,
                     readOnly: _fiscalFieldsLocked,
                     decoration: InputDecoration(
-                      labelText: 'Razon social (CIF/NIF)',
+                      labelText: 'CIF/NIF',
                       prefixIcon: const Icon(Icons.badge_outlined),
                       filled: _fiscalFieldsLocked,
                       fillColor: _fiscalFieldsLocked ? theme.colorScheme.surfaceContainerHighest : null,
@@ -289,7 +333,7 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
                     controller: _addressCtrl,
                     readOnly: _fiscalFieldsLocked,
                     decoration: InputDecoration(
-                      labelText: 'Direccion',
+                      labelText: 'Dirección fiscal',
                       prefixIcon: const Icon(Icons.location_on_outlined),
                       filled: _fiscalFieldsLocked,
                       fillColor: _fiscalFieldsLocked ? theme.colorScheme.surfaceContainerHighest : null,
@@ -348,7 +392,7 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'CIF y datos fiscales bloqueados por cumplimiento legal. Gestiona incidencias en Verifactu y contacta con soporte@novapay.es.',
+                            'Nombre fiscal, CIF/NIF y dirección fiscal bloqueados por cumplimiento legal al estar enlazado con Verifactu.',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                               fontStyle: FontStyle.italic,

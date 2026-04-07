@@ -15,6 +15,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _userCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  bool _showPassword = false;
 
   @override
   void dispose() {
@@ -30,9 +31,7 @@ class _LoginPageState extends State<LoginPage> {
     if (!mounted) return;
 
     if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Usuario o contraseña incorrectos')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Usuario o contraseña incorrectos')));
       return;
     }
 
@@ -54,46 +53,46 @@ class _LoginPageState extends State<LoginPage> {
           constraints: const BoxConstraints(maxWidth: 400),
           child: Padding(
             padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minHeight: 80,
-                  maxHeight: 260,
-                  minWidth: 80,
-                  maxWidth: 360,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 80, maxHeight: 260, minWidth: 80, maxWidth: 360),
+                  child: Image.asset('assets/images/novapay.webp', fit: BoxFit.contain),
                 ),
-                child: Image.asset('assets/images/novapay.webp', fit: BoxFit.contain),
-              ),
-              const SizedBox(height: 32),
-              TextField(
-                controller: _userCtrl,
-                decoration: const InputDecoration(labelText: 'Usuario o Email'),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Contraseña'),
-              ),
-              const SizedBox(height: 24),
-              Obx(() => SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: authCtrl.isLoading.value ? null : _login,
-                  child: authCtrl.isLoading.value
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Iniciar sesión'),
+                const SizedBox(height: 32),
+                TextField(
+                  controller: _userCtrl,
+                  decoration: const InputDecoration(labelText: 'Usuario o Email'),
                 ),
-              )),
-            ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _passCtrl,
+                  obscureText: !_showPassword,
+                  decoration: InputDecoration(
+                    labelText: 'Contraseña',
+                    suffixIcon: IconButton(
+                      onPressed: () => setState(() => _showPassword = !_showPassword),
+                      icon: Icon(_showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                      tooltip: _showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Obx(
+                  () => SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: authCtrl.isLoading.value ? null : _login,
+                      child: authCtrl.isLoading.value
+                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Text('Iniciar sesión'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );

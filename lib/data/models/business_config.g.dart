@@ -42,13 +42,18 @@ const BusinessConfigSchema = CollectionSchema(
       name: r'email',
       type: IsarType.string,
     ),
-    r'logoPath': PropertySchema(
+    r'fiscalName': PropertySchema(
       id: 5,
+      name: r'fiscalName',
+      type: IsarType.string,
+    ),
+    r'logoPath': PropertySchema(
+      id: 6,
       name: r'logoPath',
       type: IsarType.string,
     ),
     r'phone': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'phone',
       type: IsarType.string,
     )
@@ -83,6 +88,7 @@ int _businessConfigEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  bytesCount += 3 + object.fiscalName.length * 3;
   {
     final value = object.logoPath;
     if (value != null) {
@@ -109,8 +115,9 @@ void _businessConfigSerialize(
   writer.writeString(offsets[2], object.businessName);
   writer.writeString(offsets[3], object.cifNif);
   writer.writeString(offsets[4], object.email);
-  writer.writeString(offsets[5], object.logoPath);
-  writer.writeString(offsets[6], object.phone);
+  writer.writeString(offsets[5], object.fiscalName);
+  writer.writeString(offsets[6], object.logoPath);
+  writer.writeString(offsets[7], object.phone);
 }
 
 BusinessConfig _businessConfigDeserialize(
@@ -125,9 +132,10 @@ BusinessConfig _businessConfigDeserialize(
   object.businessName = reader.readString(offsets[2]);
   object.cifNif = reader.readString(offsets[3]);
   object.email = reader.readStringOrNull(offsets[4]);
+  object.fiscalName = reader.readString(offsets[5]);
   object.id = id;
-  object.logoPath = reader.readStringOrNull(offsets[5]);
-  object.phone = reader.readStringOrNull(offsets[6]);
+  object.logoPath = reader.readStringOrNull(offsets[6]);
+  object.phone = reader.readStringOrNull(offsets[7]);
   return object;
 }
 
@@ -149,8 +157,10 @@ P _businessConfigDeserializeProp<P>(
     case 4:
       return (reader.readStringOrNull(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 6:
+      return (reader.readStringOrNull(offset)) as P;
+    case 7:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -951,6 +961,142 @@ extension BusinessConfigQueryFilter
     });
   }
 
+  QueryBuilder<BusinessConfig, BusinessConfig, QAfterFilterCondition>
+      fiscalNameEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'fiscalName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<BusinessConfig, BusinessConfig, QAfterFilterCondition>
+      fiscalNameGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'fiscalName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<BusinessConfig, BusinessConfig, QAfterFilterCondition>
+      fiscalNameLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'fiscalName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<BusinessConfig, BusinessConfig, QAfterFilterCondition>
+      fiscalNameBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'fiscalName',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<BusinessConfig, BusinessConfig, QAfterFilterCondition>
+      fiscalNameStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'fiscalName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<BusinessConfig, BusinessConfig, QAfterFilterCondition>
+      fiscalNameEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'fiscalName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<BusinessConfig, BusinessConfig, QAfterFilterCondition>
+      fiscalNameContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'fiscalName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<BusinessConfig, BusinessConfig, QAfterFilterCondition>
+      fiscalNameMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'fiscalName',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<BusinessConfig, BusinessConfig, QAfterFilterCondition>
+      fiscalNameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'fiscalName',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<BusinessConfig, BusinessConfig, QAfterFilterCondition>
+      fiscalNameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'fiscalName',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<BusinessConfig, BusinessConfig, QAfterFilterCondition> idEqualTo(
       Id value) {
     return QueryBuilder.apply(this, (query) {
@@ -1389,6 +1535,20 @@ extension BusinessConfigQuerySortBy
     });
   }
 
+  QueryBuilder<BusinessConfig, BusinessConfig, QAfterSortBy>
+      sortByFiscalName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fiscalName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BusinessConfig, BusinessConfig, QAfterSortBy>
+      sortByFiscalNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fiscalName', Sort.desc);
+    });
+  }
+
   QueryBuilder<BusinessConfig, BusinessConfig, QAfterSortBy> sortByLogoPath() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'logoPath', Sort.asc);
@@ -1483,6 +1643,20 @@ extension BusinessConfigQuerySortThenBy
     });
   }
 
+  QueryBuilder<BusinessConfig, BusinessConfig, QAfterSortBy>
+      thenByFiscalName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fiscalName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BusinessConfig, BusinessConfig, QAfterSortBy>
+      thenByFiscalNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fiscalName', Sort.desc);
+    });
+  }
+
   QueryBuilder<BusinessConfig, BusinessConfig, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -1559,6 +1733,13 @@ extension BusinessConfigQueryWhereDistinct
     });
   }
 
+  QueryBuilder<BusinessConfig, BusinessConfig, QDistinct> distinctByFiscalName(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'fiscalName', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<BusinessConfig, BusinessConfig, QDistinct> distinctByLogoPath(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1611,6 +1792,12 @@ extension BusinessConfigQueryProperty
   QueryBuilder<BusinessConfig, String?, QQueryOperations> emailProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'email');
+    });
+  }
+
+  QueryBuilder<BusinessConfig, String, QQueryOperations> fiscalNameProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'fiscalName');
     });
   }
 

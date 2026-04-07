@@ -67,8 +67,13 @@ const UserSchema = CollectionSchema(
       name: r'taxId',
       type: IsarType.string,
     ),
-    r'username': PropertySchema(
+    r'ticketDisplayName': PropertySchema(
       id: 10,
+      name: r'ticketDisplayName',
+      type: IsarType.string,
+    ),
+    r'username': PropertySchema(
+      id: 11,
       name: r'username',
       type: IsarType.string,
     )
@@ -157,6 +162,12 @@ int _userEstimateSize(
     }
   }
   {
+    final value = object.ticketDisplayName;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.username;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -181,7 +192,8 @@ void _userSerialize(
   writer.writeString(offsets[7], object.phone);
   writer.writeString(offsets[8], object.role);
   writer.writeString(offsets[9], object.taxId);
-  writer.writeString(offsets[10], object.username);
+  writer.writeString(offsets[10], object.ticketDisplayName);
+  writer.writeString(offsets[11], object.username);
 }
 
 User _userDeserialize(
@@ -202,7 +214,8 @@ User _userDeserialize(
   object.phone = reader.readStringOrNull(offsets[7]);
   object.role = reader.readString(offsets[8]);
   object.taxId = reader.readStringOrNull(offsets[9]);
-  object.username = reader.readStringOrNull(offsets[10]);
+  object.ticketDisplayName = reader.readStringOrNull(offsets[10]);
+  object.username = reader.readStringOrNull(offsets[11]);
   return object;
 }
 
@@ -234,6 +247,8 @@ P _userDeserializeProp<P>(
     case 9:
       return (reader.readStringOrNull(offset)) as P;
     case 10:
+      return (reader.readStringOrNull(offset)) as P;
+    case 11:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1792,6 +1807,153 @@ extension UserQueryFilter on QueryBuilder<User, User, QFilterCondition> {
     });
   }
 
+  QueryBuilder<User, User, QAfterFilterCondition> ticketDisplayNameIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'ticketDisplayName',
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> ticketDisplayNameIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'ticketDisplayName',
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> ticketDisplayNameEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'ticketDisplayName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> ticketDisplayNameGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'ticketDisplayName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> ticketDisplayNameLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'ticketDisplayName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> ticketDisplayNameBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'ticketDisplayName',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> ticketDisplayNameStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'ticketDisplayName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> ticketDisplayNameEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'ticketDisplayName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> ticketDisplayNameContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'ticketDisplayName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> ticketDisplayNameMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'ticketDisplayName',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition> ticketDisplayNameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'ticketDisplayName',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<User, User, QAfterFilterCondition>
+      ticketDisplayNameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'ticketDisplayName',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<User, User, QAfterFilterCondition> usernameIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -2063,6 +2225,18 @@ extension UserQuerySortBy on QueryBuilder<User, User, QSortBy> {
     });
   }
 
+  QueryBuilder<User, User, QAfterSortBy> sortByTicketDisplayName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ticketDisplayName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<User, User, QAfterSortBy> sortByTicketDisplayNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ticketDisplayName', Sort.desc);
+    });
+  }
+
   QueryBuilder<User, User, QAfterSortBy> sortByUsername() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'username', Sort.asc);
@@ -2209,6 +2383,18 @@ extension UserQuerySortThenBy on QueryBuilder<User, User, QSortThenBy> {
     });
   }
 
+  QueryBuilder<User, User, QAfterSortBy> thenByTicketDisplayName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ticketDisplayName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<User, User, QAfterSortBy> thenByTicketDisplayNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ticketDisplayName', Sort.desc);
+    });
+  }
+
   QueryBuilder<User, User, QAfterSortBy> thenByUsername() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'username', Sort.asc);
@@ -2292,6 +2478,14 @@ extension UserQueryWhereDistinct on QueryBuilder<User, User, QDistinct> {
     });
   }
 
+  QueryBuilder<User, User, QDistinct> distinctByTicketDisplayName(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'ticketDisplayName',
+          caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<User, User, QDistinct> distinctByUsername(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2364,6 +2558,12 @@ extension UserQueryProperty on QueryBuilder<User, User, QQueryProperty> {
   QueryBuilder<User, String?, QQueryOperations> taxIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'taxId');
+    });
+  }
+
+  QueryBuilder<User, String?, QQueryOperations> ticketDisplayNameProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'ticketDisplayName');
     });
   }
 

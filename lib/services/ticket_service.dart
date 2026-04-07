@@ -1,6 +1,7 @@
 // lib/services/ticket_service.dart
 import 'package:isar/isar.dart';
 import 'package:uuid/uuid.dart';
+import '../data/models/fiscal_ticket_trace.dart';
 import '../data/models/product.dart';
 import '../data/models/ticket.dart';
 import '../data/models/ticket_line.dart';
@@ -193,5 +194,46 @@ class TicketService {
     await _isar.writeTxn(() async {
       await _isar.tickets.put(ticket);
     });
+  }
+
+  Future<Ticket> createFromFiscalTrace(FiscalTicketTrace trace) async {
+    final ticket = Ticket()
+      ..uuid = _uuid.v4()
+      ..createdAt = DateTime.now()
+      ..status = TicketStatus.abierto
+      ..paymentMethod = _parsePaymentMethod(trace.paymentMethod)
+      ..tableNumber = trace.ticketTableNumber
+      ..tableOrLabel = trace.ticketTableLabel
+      ..zone = trace.ticketZone
+      ..isParked = false
+      ..lines = trace.lines
+          .map(
+            (line) => TicketLine()
+              ..productName = line.productName
+              ..quantity = line.quantity
+              ..priceAtMoment = line.unitPrice
+              ..totalLine = line.totalLine,
+          )
+          .toList();
+
+    ticket.totalAmount = ticket.lines.fold(0.0, (sum, line) => sum + line.totalLine);
+
+    await _isar.writeTxn(() async {
+      await _isar.tickets.put(ticket);
+    });
+
+    return ticket;
+  }
+
+  PaymentMethod _parsePaymentMethod(String? raw) {
+    switch (raw) {
+      case 'tarjeta':
+        return PaymentMethod.tarjeta;
+      case 'mixto':
+        return PaymentMethod.mixto;
+      case 'efectivo':
+      default:
+        return PaymentMethod.efectivo;
+    }
   }
 }

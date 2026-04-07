@@ -6,8 +6,7 @@ import 'package:media_kit/media_kit.dart';
 import 'config/theme.dart';
 import 'config/app_routes.dart';
 import 'data/local/isar.dart';
-import 'data/seed/product_seed.dart';
-import 'services/user_service.dart';
+import 'services/config_service.dart';
 import 'bindings/app_bindings.dart';
 import 'presentation/pages/splash_page.dart';
 import 'presentation/pages/login_page.dart';
@@ -29,8 +28,7 @@ void main() async {
   // Inicializa el servicio de base de datos y otros servicios necesarios antes de ejecutar la aplicación
   MediaKit.ensureInitialized();
   final isar = await openIsar();
-  await UserService(isar).seedAdmin();
-  await seedProducts(isar);
+  await ConfigService(isar).factoryResetKeepingSeeds();
   runApp(MainApp(isar: isar));
 }
 

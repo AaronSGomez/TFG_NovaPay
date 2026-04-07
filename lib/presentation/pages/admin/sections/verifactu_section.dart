@@ -459,6 +459,87 @@ class _VerifactuSectionState extends State<VerifactuSection> {
     );
   }
 
+  Future<void> _showRemediationDialog(FiscalInteraction item) async {
+    final trace = _controller.traceForInvoice(item.invoiceId);
+    final theme = Theme.of(context);
+    final reasonCtrl = TextEditingController(
+      text: 'Subsanación por rechazo AEAT ${item.responseCode != null ? '[${item.responseCode}]' : ''}'.trim(),
+    );
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Subsanar ${item.invoiceSeries}-${item.invoiceNumber}'),
+          content: SizedBox(
+            width: 520,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Proceso recomendado: anular factura rechazada y emitir nuevo ticket corregido.'),
+                const SizedBox(height: 10),
+                if (item.responseDescription != null && item.responseDescription!.isNotEmpty)
+                  Text('Motivo AEAT: ${item.responseDescription!}'),
+                if (item.responseCode != null && item.responseCode!.isNotEmpty)
+                  Text('Código AEAT: ${item.responseCode!}'),
+                const SizedBox(height: 8),
+                if (trace != null && trace.lines.isNotEmpty) ...[
+                  Text('Ticket local: ${trace.ticketUuid ?? '-'}'),
+                  Text('Líneas originales (${trace.lines.length}):'),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    height: 120,
+                    child: ListView.builder(
+                      itemCount: trace.lines.length,
+                      itemBuilder: (context, index) {
+                        final line = trace.lines[index];
+                        return Text('${line.quantity}x ${line.productName} · ${_money.format(line.totalLine)}');
+                      },
+                    ),
+                  ),
+                ] else
+                  Text(
+                    'No se pudieron recuperar automáticamente las líneas del ticket local para esta factura. Se anulará igual y podrás rehacerlas manualmente.',
+                    style: theme.textTheme.bodySmall?.copyWith(color: AppTheme.warning),
+                  ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: reasonCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Motivo de anulación/subsanación',
+                    hintText: 'Describe la corrección aplicada',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+            FilledButton.icon(
+              onPressed: _controller.isSubmitting.value
+                  ? null
+                  : () async {
+                      final reason = reasonCtrl.text.trim();
+                      if (reason.isEmpty) {
+                        Get.snackbar('Verifactu', 'El motivo de subsanación es obligatorio.');
+                        return;
+                      }
+                      Navigator.of(context).pop();
+                      await _controller.remediateRejectedInteraction(item, reason: reason);
+                    },
+              icon: const Icon(Icons.rule_folder_outlined),
+              label: const Text('Anular y subsanar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    reasonCtrl.dispose();
+  }
+
   void _hardResetAccessUi() {
     setState(() {
       _companyCtrl.clear();
@@ -1081,6 +1162,7 @@ class _VerifactuSectionState extends State<VerifactuSection> {
         else
           ...interactions.map((item) {
             final color = _statusColor(item.status);
+            final trace = _controller.traceForInvoice(item.invoiceId);
             return Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -1124,6 +1206,27 @@ class _VerifactuSectionState extends State<VerifactuSection> {
                         Text('Respuesta: ${_formatDate(item.respondedAt)}'),
                       ],
                     ),
+                    const SizedBox(height: 6),
+                    Text(
+                      trace != null
+                          ? 'Ticket local: ${trace.ticketUuid ?? '-'} · Líneas: ${trace.lines.length}'
+                          : 'Ticket local: guardado en Isar (sin líneas recuperadas para esta factura)',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: trace != null ? AppTheme.textSecondary : AppTheme.textSecondary,
+                      ),
+                    ),
+                    if (trace != null && trace.lines.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: trace.lines
+                            .map(
+                              (line) => Text('${line.quantity}x ${line.productName}', style: theme.textTheme.bodySmall),
+                            )
+                            .toList(),
+                      ),
+                    ],
                     if (item.secureVerificationCode != null && !_isRetryableStatus(item.status)) ...[
                       const SizedBox(height: 8),
                       Text(
@@ -1151,13 +1254,21 @@ class _VerifactuSectionState extends State<VerifactuSection> {
                     ],
                     if (_isRetryableStatus(item.status)) ...[
                       const SizedBox(height: 10),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: FilledButton.icon(
-                          onPressed: _controller.isSubmitting.value ? null : () => _controller.retryInteraction(item),
-                          icon: const Icon(Icons.restart_alt),
-                          label: const Text('Reenviar ticket'),
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: _controller.isSubmitting.value ? null : () => _showRemediationDialog(item),
+                            icon: const Icon(Icons.rule_folder_outlined),
+                            label: const Text('Subsanar (anular)'),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton.icon(
+                            onPressed: _controller.isSubmitting.value ? null : () => _controller.retryInteraction(item),
+                            icon: const Icon(Icons.restart_alt),
+                            label: const Text('Reenviar ticket'),
+                          ),
+                        ],
                       ),
                     ],
                   ],

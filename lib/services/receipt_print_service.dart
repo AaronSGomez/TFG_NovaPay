@@ -52,8 +52,10 @@ class ReceiptPrintService {
     final adminUser = await _getAdminUser();
     final businessConfig = await _getBusinessConfig();
 
-    final finalEmitterName =
+    final finalHeaderName =
         _firstNonBlank([emitterName, businessConfig?.businessName, adminUser?.companyName]) ?? _defaultEmitterName;
+
+    final finalFiscalName = _firstNonBlank([businessConfig?.fiscalName, adminUser?.companyName, finalHeaderName]);
 
     final finalEmitterNif =
         _firstNonBlank([emitterNif, businessConfig?.cifNif, adminUser?.taxId]) ?? _defaultEmitterNif;
@@ -98,11 +100,14 @@ class ReceiptPrintService {
                 pw.Center(child: pw.Image(logoImage, width: 110, height: 110, fit: pw.BoxFit.contain)),
                 pw.SizedBox(height: 6),
               ],
-              pw.Center(child: pw.Text(finalEmitterName, style: boldStyle(fontSize: 16))),
+              pw.Center(child: pw.Text(finalHeaderName, style: boldStyle(fontSize: 16))),
               pw.SizedBox(height: 8),
-              pw.Center(child: pw.Text(finalEmitterName, style: baseStyle())),
-              pw.Center(child: pw.Text(finalEmitterNif, style: baseStyle())),
-              pw.Center(child: pw.Text(finalEmitterAddress, style: baseStyle())),
+              if (finalFiscalName != null && finalFiscalName.isNotEmpty)
+                pw.Center(child: pw.Text(finalFiscalName, style: baseStyle(fontSize: 8))),
+              if (finalEmitterNif.isNotEmpty)
+                pw.Center(child: pw.Text('CIF/NIF: $finalEmitterNif', style: baseStyle(fontSize: 8))),
+              if (finalEmitterAddress.isNotEmpty)
+                pw.Center(child: pw.Text(finalEmitterAddress, style: baseStyle(fontSize: 8))),
               pw.SizedBox(height: 6),
               pw.Center(child: pw.Text('Fecha: ${_dateTimeFormat.format(ticket.createdAt)}', style: baseStyle())),
               pw.SizedBox(height: 6),
@@ -295,6 +300,8 @@ class ReceiptPrintService {
     try {
       if (Get.isRegistered<AuthController>()) {
         final current = Get.find<AuthController>().currentUser.value;
+        final customName = current?.ticketDisplayName?.trim();
+        if (customName != null && customName.isNotEmpty) return customName;
         final name = '${current?.username ?? ''} ${current?.lastName ?? ''}'.trim();
         if (name.isNotEmpty) return name;
       }

@@ -73,20 +73,22 @@ class UserService {
   }
 
   Future<void> seedAdmin() async {
-    final existing = await _isar.users.filter().emailEqualTo('admin').findFirst();
-    if (existing != null) {
+    final existing = await _isar.users.filter().roleEqualTo('admin').findFirst();
+    final legacyByEmail = existing == null ? await _isar.users.filter().emailEqualTo('admin').findFirst() : null;
+    final target = existing ?? legacyByEmail;
+    if (target != null) {
       bool updated = false;
-      if (existing.role != 'admin') {
-        existing.role = 'admin';
+      if (target.role != 'admin') {
+        target.role = 'admin';
         updated = true;
       }
-      final pwd = existing.password;
+      final pwd = target.password;
       if (pwd != null && !_isHashed(pwd)) {
-        existing.password = hashPassword(pwd);
+        target.password = hashPassword(pwd);
         updated = true;
       }
       if (updated) {
-        await _isar.writeTxn(() async => _isar.users.put(existing));
+        await _isar.writeTxn(() async => _isar.users.put(target));
       }
       return;
     }

@@ -7,11 +7,11 @@ class ReportController extends GetxController {
   final ReportService _service;
   ReportController(this._service);
 
-  final reports     = <DailyReport>[].obs;
+  final reports = <DailyReport>[].obs;
   final todayReport = Rxn<DailyReport>();
-  final liveStats   = Rxn<DailyReport>();
-  final isLoading   = false.obs;
-  final isClosing   = false.obs;
+  final liveStats = Rxn<DailyReport>();
+  final isLoading = false.obs;
+  final isClosing = false.obs;
 
   @override
   void onInit() {
@@ -53,7 +53,7 @@ class ReportController extends GetxController {
       isClosing.value = true;
       final report = await _service.closeDay();
       todayReport.value = report;
-      liveStats.value   = report;
+      liveStats.value = report;
       await loadAll();
     } catch (e) {
       Get.snackbar('Error', 'No se pudo cerrar la jornada');
@@ -70,28 +70,31 @@ class ReportController extends GetxController {
 
   // ── Getters (live stats take priority, fallback to closed report) ─────────
 
-  double get todayCash => liveStats.value?.totalCash
-      ?? todayReport.value?.totalCash ?? 0;
+  double get todayCash => liveStats.value?.totalCash ?? todayReport.value?.totalCash ?? 0;
 
-  double get todayCard => liveStats.value?.totalCard
-      ?? todayReport.value?.totalCard ?? 0;
+  double get todayCard => liveStats.value?.totalCard ?? todayReport.value?.totalCard ?? 0;
 
   /// Gross ticket income (cash + card), used as «Ingresos» in the balance view.
-  double get todayTotal =>
-      (liveStats.value?.totalCash ?? 0) + (liveStats.value?.totalCard ?? 0);
+  double get todayTotal => (liveStats.value?.totalCash ?? 0) + (liveStats.value?.totalCard ?? 0);
 
   double get todayExpenses => liveStats.value?.totalExpenses ?? 0;
 
-  int get todayCount => liveStats.value?.ticketCount
-      ?? todayReport.value?.ticketCount ?? 0;
+  int get todayCount => liveStats.value?.ticketCount ?? todayReport.value?.ticketCount ?? 0;
 
   Map<String, int> get todaySoldProducts {
-    final summary = liveStats.value?.soldProductsSummary
-        ?? todayReport.value?.soldProductsSummary ?? [];
+    final summary = liveStats.value?.soldProductsSummary ?? todayReport.value?.soldProductsSummary ?? [];
     final map = <String, int>{};
     for (final entry in summary) {
-      final parts = entry.split(':');
-      if (parts.length == 2) map[parts[0]] = int.tryParse(parts[1]) ?? 0;
+      final idx = entry.lastIndexOf(':');
+      if (idx <= 0 || idx >= entry.length - 1) {
+        continue;
+      }
+      final name = entry.substring(0, idx).trim();
+      final count = int.tryParse(entry.substring(idx + 1).trim()) ?? 0;
+      if (name.isEmpty || count <= 0) {
+        continue;
+      }
+      map[name] = count;
     }
     return map;
   }

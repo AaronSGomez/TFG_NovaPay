@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../data/models/ticket.dart';
 import '../../data/models/ticket_line.dart';
 import '../../data/models/verifactu_models.dart';
+import '../../services/fiscal_ticket_trace_service.dart';
 import '../../services/receipt_print_service.dart';
 import '../../services/ticket_service.dart';
 import '../../services/verifactu_service.dart';
@@ -20,8 +21,9 @@ class TicketController extends GetxController {
   final TicketService _service;
   final VerifactuService _verifactuService;
   final ReceiptPrintService _receiptPrintService;
+  final FiscalTicketTraceService _fiscalTraceService;
 
-  TicketController(this._service, this._verifactuService, this._receiptPrintService);
+  TicketController(this._service, this._verifactuService, this._receiptPrintService, this._fiscalTraceService);
 
   final openTickets = <Ticket>[].obs;
   final parkedTickets = <Ticket>[].obs;
@@ -218,6 +220,7 @@ class TicketController extends GetxController {
       final InvoiceEmissionResult emission = await _verifactuService.emitTicket(ticket);
       invoiceForPrint = emission.invoice;
       fiscalStatus = emission.fiscalStatus;
+      await _fiscalTraceService.saveEmissionTrace(ticket: ticket, invoice: invoiceForPrint);
       Get.find<VerifactuController>().refreshInteractions();
       if (fiscalStatus == null) {
         Get.snackbar('Verifactu', 'Ticket enviado al backend. Esperando respuesta fiscal de AEAT.');
