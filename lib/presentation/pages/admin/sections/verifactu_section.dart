@@ -576,6 +576,29 @@ class _VerifactuSectionState extends State<VerifactuSection> {
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
+        if (!_controller.isBackendReachable.value && _controller.connectionAlertMessage.value != null)
+          Card(
+            color: AppTheme.warning.withValues(alpha: 0.12),
+            child: ListTile(
+              leading: const Icon(Icons.cloud_off, color: AppTheme.warning),
+              title: const Text('Backend Verifactu desconectado'),
+              subtitle: Text(_controller.connectionAlertMessage.value!),
+            ),
+          ),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Wrap(
+              spacing: 14,
+              runSpacing: 8,
+              children: [
+                Text('Cola pendiente: ${_controller.pendingQueueCount.value}'),
+                Text('Sincronizados: ${_controller.syncedQueueCount.value}'),
+                Text('Registros finales: ${_controller.finalQueueCount.value}'),
+              ],
+            ),
+          ),
+        ),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(14),
@@ -1094,16 +1117,6 @@ class _VerifactuSectionState extends State<VerifactuSection> {
   }
 
   Widget _buildTicketsTab(ThemeData theme, bool canUseBackend) {
-    if (!canUseBackend) {
-      return Center(
-        child: Text(
-          'Modo local activo: no se harán intentos de conexión al backend al emitir tickets.',
-          style: theme.textTheme.bodyMedium,
-          textAlign: TextAlign.center,
-        ),
-      );
-    }
-
     if (_controller.isLoading.value && _controller.interactions.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -1122,6 +1135,15 @@ class _VerifactuSectionState extends State<VerifactuSection> {
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
+        if (!canUseBackend)
+          Card(
+            color: AppTheme.warning.withValues(alpha: 0.12),
+            child: const ListTile(
+              leading: Icon(Icons.cloud_off, color: AppTheme.warning),
+              title: Text('Modo local activo'),
+              subtitle: Text('Mostrando datos locales de tickets pendientes y sincronizados.'),
+            ),
+          ),
         Wrap(
           spacing: 8,
           runSpacing: 8,

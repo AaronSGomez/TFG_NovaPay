@@ -35,6 +35,10 @@ class TicketService {
     return _isar.tickets.get(id);
   }
 
+  Future<Ticket?> getByUuid(String uuid) async {
+    return _isar.tickets.filter().uuidEqualTo(uuid).findFirst();
+  }
+
   Future<List<Ticket>> getOpen() async {
     return _isar.tickets.filter().statusEqualTo(TicketStatus.abierto).sortByCreatedAtDesc().findAll();
   }
@@ -200,7 +204,7 @@ class TicketService {
     final ticket = Ticket()
       ..uuid = _uuid.v4()
       ..createdAt = DateTime.now()
-      ..status = TicketStatus.abierto
+      ..status = TicketStatus.pagado
       ..paymentMethod = _parsePaymentMethod(trace.paymentMethod)
       ..tableNumber = trace.ticketTableNumber
       ..tableOrLabel = trace.ticketTableLabel

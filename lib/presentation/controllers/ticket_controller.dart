@@ -1,7 +1,12 @@
 // lib/presentation/controllers/ticket_controller.dart
+import 'dart:async';
+import 'dart:io';
+
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import '../../data/models/ticket.dart';
 import '../../data/models/ticket_line.dart';
+import '../../data/models/fiscal_ticket_trace.dart';
 import '../../data/models/verifactu_models.dart';
 import '../../services/fiscal_ticket_trace_service.dart';
 import '../../services/receipt_print_service.dart';
@@ -17,6 +22,8 @@ class TicketController extends GetxController {
     'NOVAPAY_AUTO_PRINT_AFTER_EMISSION',
     defaultValue: true,
   );
+  static const String _aeatQrBaseUrl =
+      'https://www2.agenciatributaria.gob.es/wlpl/inwinv/es/es.aeat.dit.adu.einv.qr.QRWidget?csv=';
 
   final TicketService _service;
   final VerifactuService _verifactuService;
@@ -122,18 +129,33 @@ class TicketController extends GetxController {
 
   Future<void> reprintTicket(Ticket ticket) async {
     try {
+      final trace = await _fiscalTraceService.getByTicketUuid(ticket.uuid);
+      final ticketForPrint = _buildTicketForReprint(ticket, trace);
+      final invoiceForPrint = trace != null
+          ? BackendInvoiceResponse(
+              id: trace.invoiceId,
+              series: trace.invoiceSeries,
+              number: trace.invoiceNumber,
+              type: 'SIMPLIFICADA',
+              status: trace.printedFiscalStatus ?? trace.fiscalStatus ?? 'REIMPRESION',
+              issueDate: trace.createdAt.toIso8601String(),
+              totalAmount: trace.totalAmount,
+            )
+          : BackendInvoiceResponse(
+              id: ticket.uuid,
+              series: 'TICKET',
+              number: ticket.id,
+              type: 'SIMPLIFICADA',
+              status: 'REIMPRESION',
+              issueDate: ticket.createdAt.toIso8601String(),
+              totalAmount: ticket.totalAmount,
+            );
+      final fiscalStatus = trace == null ? null : _fiscalStatusFromTrace(trace);
       await _receiptPrintService.printTicket(
-        ticket: ticket,
-        invoice: BackendInvoiceResponse(
-          id: ticket.uuid,
-          series: 'TICKET',
-          number: ticket.id,
-          type: 'SIMPLIFICADA',
-          status: 'REIMPRESION',
-          issueDate: ticket.createdAt.toIso8601String(),
-          totalAmount: ticket.totalAmount,
-        ),
-        fiscalStatus: null,
+        ticket: ticketForPrint,
+        invoice: invoiceForPrint,
+        fiscalStatus: fiscalStatus,
+        provisionalQrPayload: trace?.printedQrPayload,
       );
       Get.snackbar('Impresion', 'Ticket reimpreso correctamente.');
     } catch (e) {
@@ -215,12 +237,21 @@ class TicketController extends GetxController {
 
     FiscalStatusResponse? fiscalStatus;
     var shouldPrint = _autoPrintAfterEmission;
+    var provisionalQrPayload = ticket.uuid;
 
     try {
       final InvoiceEmissionResult emission = await _verifactuService.emitTicket(ticket);
       invoiceForPrint = emission.invoice;
       fiscalStatus = emission.fiscalStatus;
-      await _fiscalTraceService.saveEmissionTrace(ticket: ticket, invoice: invoiceForPrint);
+      provisionalQrPayload = emission.invoice.id;
+      await _fiscalTraceService.saveEmissionTrace(
+        ticket: ticket,
+        invoice: invoiceForPrint,
+        fiscalStatus: fiscalStatus,
+        printedFiscalStatus: fiscalStatus?.status ?? 'PENDIENTE_VALIDACION',
+        printedQrPayload: _printedQrPayloadFromFiscalStatus(fiscalStatus, fallbackPayload: provisionalQrPayload),
+        queueStatus: fiscalStatus == null ? 'PENDING' : 'FINAL',
+      );
       Get.find<VerifactuController>().refreshInteractions();
       if (fiscalStatus == null) {
         Get.snackbar('Verifactu', 'Ticket enviado al backend. Esperando respuesta fiscal de AEAT.');
@@ -240,8 +271,27 @@ class TicketController extends GetxController {
         Get.snackbar('Verifactu', 'Respuesta fiscal ${fiscalStatus.status}$code$detail');
       }
     } catch (e) {
-      if (e is VerifactuLocalModeException) {
-        Get.snackbar('Verifactu', e.message);
+      final isOfflineLike = _isBackendUnavailableError(e);
+      if (isOfflineLike) {
+        invoiceForPrint = BackendInvoiceResponse(
+          id: ticket.uuid,
+          series: 'PEND',
+          number: ticket.id,
+          type: 'SIMPLIFICADA',
+          status: 'PENDIENTE_ENVIO',
+          issueDate: ticket.createdAt.toIso8601String(),
+          totalAmount: ticket.totalAmount,
+        );
+        provisionalQrPayload = ticket.uuid;
+        await _fiscalTraceService.saveEmissionTrace(
+          ticket: ticket,
+          invoice: invoiceForPrint,
+          printedFiscalStatus: 'PENDIENTE_ENVIO',
+          printedQrPayload: ticket.uuid,
+          queueStatus: 'PENDING',
+        );
+        Get.find<VerifactuController>().refreshInteractions();
+        Get.snackbar('Verifactu', 'Backend no disponible. El ticket queda pendiente de envío con QR provisional.');
       } else {
         shouldPrint = false;
         final details = switch (e) {
@@ -257,6 +307,7 @@ class TicketController extends GetxController {
             ticket: ticket,
             invoice: invoiceForPrint,
             fiscalStatus: fiscalStatus,
+            provisionalQrPayload: provisionalQrPayload,
             cashGiven: cashGiven,
             cashChange: cashChange,
           );
@@ -299,5 +350,76 @@ class TicketController extends GetxController {
         .toList();
 
     return cloned;
+  }
+
+  Ticket _buildTicketForReprint(Ticket ticket, FiscalTicketTrace? trace) {
+    if (trace == null) {
+      return _cloneTicket(ticket);
+    }
+
+    final ticketForPrint = _cloneTicket(ticket);
+    if (ticketForPrint.lines.isEmpty && trace.lines.isNotEmpty) {
+      ticketForPrint.lines = trace.lines
+          .map(
+            (line) => TicketLine()
+              ..productName = line.productName
+              ..quantity = line.quantity
+              ..priceAtMoment = line.unitPrice
+              ..totalLine = line.totalLine,
+          )
+          .toList();
+      ticketForPrint.totalAmount = trace.totalAmount;
+    }
+    return ticketForPrint;
+  }
+
+  FiscalStatusResponse? _fiscalStatusFromTrace(FiscalTicketTrace trace) {
+    final status = trace.printedFiscalStatus?.trim() ?? trace.fiscalStatus?.trim();
+    if (status == null || status.isEmpty) {
+      return null;
+    }
+
+    return FiscalStatusResponse(
+      invoiceId: trace.invoiceId,
+      status: status,
+      retryCount: 0,
+      responseCode: trace.responseCode,
+      responseDescription: trace.responseDescription,
+      secureVerificationCode: trace.secureVerificationCode,
+      verificationUrl: trace.printedQrPayload ?? trace.verificationUrl,
+    );
+  }
+
+  String? _printedQrPayloadFromFiscalStatus(FiscalStatusResponse? fiscalStatus, {String? fallbackPayload}) {
+    if (fiscalStatus == null) {
+      return fallbackPayload;
+    }
+
+    final url = fiscalStatus.verificationUrl?.trim();
+    if (url != null && url.isNotEmpty) {
+      return url;
+    }
+
+    final csv = fiscalStatus.secureVerificationCode?.trim();
+    if (csv != null && csv.isNotEmpty) {
+      return '$_aeatQrBaseUrl$csv';
+    }
+
+    return fallbackPayload;
+  }
+
+  bool _isBackendUnavailableError(Object error) {
+    if (error is VerifactuLocalModeException) {
+      return true;
+    }
+    if (error is TimeoutException || error is SocketException || error is http.ClientException) {
+      return true;
+    }
+    if (error is VerifactuApiException) {
+      return error.statusCode == null || error.statusCode! >= 500;
+    }
+
+    final text = error.toString().toLowerCase();
+    return text.contains('socketexception') || text.contains('clientexception') || text.contains('timeoutexception');
   }
 }

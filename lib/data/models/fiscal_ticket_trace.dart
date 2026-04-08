@@ -27,6 +27,14 @@ class FiscalTicketTrace {
   String invoiceSeries = '';
   int invoiceNumber = 0;
   double totalAmount = 0;
+  String queueStatus = 'FINAL';
+  String? printedFiscalStatus;
+  String? printedQrPayload;
+  String? fiscalStatus;
+  String? secureVerificationCode;
+  String? verificationUrl;
+  String? responseCode;
+  String? responseDescription;
 
   List<FiscalTicketTraceLine> lines = [];
 }

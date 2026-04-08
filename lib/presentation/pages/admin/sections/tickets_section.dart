@@ -447,7 +447,7 @@ class _TicketDetailSheet extends StatelessWidget {
                 if (ticket.status != TicketStatus.abierto)
                   ElevatedButton.icon(
                     icon: const Icon(Icons.edit_note),
-                    label: const Text('Corregir cobro'),
+                    label: const Text('Rectificar y reemitir'),
                     style: ElevatedButton.styleFrom(backgroundColor: AppTheme.warning, foregroundColor: Colors.white),
                     onPressed: onCorrect,
                   ),
@@ -689,7 +689,7 @@ class _TicketCorrectionSheetState extends State<_TicketCorrectionSheet> {
                 Expanded(
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.payment),
-                    label: const Text('Re-cobrar'),
+                    label: const Text('Reemitir'),
                     onPressed: _recharge,
                   ),
                 ),

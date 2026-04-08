@@ -27,6 +27,11 @@ class VerifactuController extends GetxController {
   final adminUser = Rxn<User>();
   final hasActiveJwtSession = false.obs;
   final tracesByInvoice = <String, FiscalTicketTrace>{}.obs;
+  final pendingQueueCount = 0.obs;
+  final syncedQueueCount = 0.obs;
+  final finalQueueCount = 0.obs;
+  final isBackendReachable = true.obs;
+  final connectionAlertMessage = RxnString();
 
   @override
   void onInit() {
@@ -56,6 +61,7 @@ class VerifactuController extends GetxController {
       await refreshInteractions();
     } else {
       subscriptionSummary.value = null;
+      await _refreshLocalQueueCounters();
     }
   }
 
@@ -208,12 +214,20 @@ class VerifactuController extends GetxController {
     try {
       isLoading.value = true;
       errorMessage.value = null;
+      connectionAlertMessage.value = null;
       backendState.value = await _service.getBackendState();
       hasActiveJwtSession.value = _service.hasActiveJwtSession;
 
+      if ((backendState.value?.canUseBackend ?? false) || hasActiveJwtSession.value) {
+        await _syncPendingLocalEmissions();
+      }
+
       if (!(backendState.value?.canUseBackend ?? false) && !hasActiveJwtSession.value) {
-        interactions.clear();
+        await _loadLocalInteractionsFallback();
+        isBackendReachable.value = false;
+        connectionAlertMessage.value = 'Backend no disponible. Mostrando estado local pendiente/sincronizado.';
         await _syncAdminBackendLock((backendState.value?.registered ?? false) || hasActiveJwtSession.value);
+        await _refreshLocalQueueCounters();
         return;
       }
 
@@ -224,9 +238,19 @@ class VerifactuController extends GetxController {
 
       interactions.value = await _service.fetchInteractions();
       await _loadLocalTraces(interactions);
+      isBackendReachable.value = true;
       await _syncAdminBackendLock((backendState.value?.registered ?? false) || hasActiveJwtSession.value);
+      await _refreshLocalQueueCounters();
     } catch (e) {
+      final backendDown = _isBackendConnectivityError(e);
       errorMessage.value = 'No se pudieron cargar las interacciones Verifactu.';
+      if (backendDown) {
+        isBackendReachable.value = false;
+        connectionAlertMessage.value = 'Sin conexion con backend Verifactu. Se muestra el estado local en cola.';
+        await _loadLocalInteractionsFallback();
+        await _refreshLocalQueueCounters();
+        Get.snackbar('Verifactu', 'Backend desconectado. Revisa la cola local de tickets pendientes.');
+      }
     } finally {
       isLoading.value = false;
     }
@@ -385,6 +409,94 @@ class VerifactuController extends GetxController {
     } finally {
       isSubmitting.value = false;
     }
+  }
+
+  Future<void> _syncPendingLocalEmissions() async {
+    final pendingTraces = await _fiscalTraceService.getPendingProvisionalTraces();
+    if (pendingTraces.isEmpty) {
+      return;
+    }
+
+    for (final trace in pendingTraces) {
+      final ticketUuid = trace.ticketUuid;
+      if (ticketUuid == null || ticketUuid.trim().isEmpty) {
+        continue;
+      }
+
+      final ticket = await _ticketService.getByUuid(ticketUuid);
+      if (ticket == null || ticket.lines.isEmpty) {
+        continue;
+      }
+
+      try {
+        final emission = await _service.emitTicket(ticket);
+        await _fiscalTraceService.saveEmissionTrace(
+          ticket: ticket,
+          invoice: emission.invoice,
+          fiscalStatus: emission.fiscalStatus,
+          queueStatus: 'FINAL',
+        );
+        await _fiscalTraceService.markQueueStatusByInvoiceId(trace.invoiceId, 'SYNCED');
+      } catch (_) {
+        // Se mantiene en cola provisional para reintentar en el próximo refresco.
+      }
+    }
+
+    await _refreshLocalQueueCounters();
+  }
+
+  Future<void> _loadLocalInteractionsFallback() async {
+    final traces = await _fiscalTraceService.getAll();
+    final localInteractions = traces
+        .map(
+          (trace) => FiscalInteraction(
+            invoiceId: trace.invoiceId,
+            invoiceSeries: trace.invoiceSeries,
+            invoiceNumber: trace.invoiceNumber,
+            issueDate: trace.createdAt.toIso8601String(),
+            totalAmount: trace.totalAmount,
+            status: _localStatusForTrace(trace),
+            retryCount: trace.queueStatus == 'PENDING' ? 0 : 1,
+            sentAt: trace.queueStatus == 'PENDING' ? null : trace.createdAt.toIso8601String(),
+            respondedAt: trace.queueStatus == 'PENDING' ? null : trace.createdAt.toIso8601String(),
+            secureVerificationCode: trace.secureVerificationCode,
+            verificationUrl: trace.verificationUrl,
+            responseCode: trace.responseCode,
+            responseDescription: trace.responseDescription,
+          ),
+        )
+        .toList();
+
+    interactions.value = localInteractions;
+    tracesByInvoice.value = {for (final trace in traces) trace.invoiceId: trace};
+  }
+
+  Future<void> _refreshLocalQueueCounters() async {
+    pendingQueueCount.value = await _fiscalTraceService.countByQueueStatus('PENDING');
+    syncedQueueCount.value = await _fiscalTraceService.countByQueueStatus('SYNCED');
+    finalQueueCount.value = await _fiscalTraceService.countByQueueStatus('FINAL');
+  }
+
+  String _localStatusForTrace(FiscalTicketTrace trace) {
+    if (trace.queueStatus == 'PENDING') {
+      return 'PENDIENTE_ENVIO';
+    }
+    if (trace.queueStatus == 'SYNCED') {
+      return trace.fiscalStatus ?? trace.printedFiscalStatus ?? 'SINCRONIZADO';
+    }
+    return trace.fiscalStatus ?? trace.printedFiscalStatus ?? 'FINAL';
+  }
+
+  bool _isBackendConnectivityError(Object error) {
+    if (error is VerifactuApiException) {
+      final code = error.statusCode;
+      return code == null || code >= 500;
+    }
+    final text = error.toString().toLowerCase();
+    return text.contains('socket') ||
+        text.contains('timeout') ||
+        text.contains('failed host lookup') ||
+        text.contains('connection refused');
   }
 
   FiscalTicketTrace? traceForInvoice(String invoiceId) => tracesByInvoice[invoiceId];

@@ -42,6 +42,7 @@ class ReceiptPrintService {
     required Ticket ticket,
     required BackendInvoiceResponse invoice,
     FiscalStatusResponse? fiscalStatus,
+    String? provisionalQrPayload,
     String? emitterName,
     String? emitterNif,
     String? emitterAddress,
@@ -68,7 +69,7 @@ class ReceiptPrintService {
     final logoImage = await _loadLogoForThermalPrint(_firstNonBlank([businessConfig?.logoPath, adminUser?.logoPath]));
 
     final doc = pw.Document();
-    final qrPayload = _resolveVerificationUrl(fiscalStatus);
+    final qrPayload = _resolveQrPayload(invoice, fiscalStatus, provisionalQrPayload);
     final taxInfo = _taxInfoFromType(_defaultTaxType);
     final totals = _computeTotalsWithVat(ticket.totalAmount, taxInfo.ratePercent);
     final baseFont = await PdfGoogleFonts.notoSansRegular();
@@ -195,13 +196,21 @@ class ReceiptPrintService {
               pw.SizedBox(height: 8),
               pw.Center(child: pw.Text('Gracias por su visita', style: boldStyle(fontSize: 11))),
               pw.SizedBox(height: 6),
-              // El ticket fiscal debe mostrar el QR oficial de AEAT cuando existe aceptación.
+              // El ticket fiscal muestra el QR oficial cuando existe aceptación;
+              // si la emisión queda pendiente, imprimimos un QR provisional de continuidad.
               if (qrPayload != null) ...[
                 pw.Center(
                   child: pw.BarcodeWidget(barcode: pw.Barcode.qrCode(), data: qrPayload, width: 84, height: 84),
                 ),
                 pw.SizedBox(height: 2),
-                pw.Center(child: pw.Text('QR Verificación AEAT (oficial)', style: baseStyle(fontSize: 7))),
+                pw.Center(
+                  child: pw.Text(
+                    invoice.status == 'PENDIENTE_ENVIO'
+                        ? 'QR provisional de continuidad'
+                        : 'QR Verificación AEAT (oficial)',
+                    style: baseStyle(fontSize: 7),
+                  ),
+                ),
               ] else ...[
                 pw.Center(
                   child: pw.Text(
@@ -248,7 +257,19 @@ class ReceiptPrintService {
     return (baseAmount: base, taxAmount: tax);
   }
 
-  String? _resolveVerificationUrl(FiscalStatusResponse? fiscalStatus) {
+  String? _resolveQrPayload(
+    BackendInvoiceResponse invoice,
+    FiscalStatusResponse? fiscalStatus,
+    String? provisionalQrPayload,
+  ) {
+    if (invoice.status == 'PENDIENTE_ENVIO') {
+      final pending = provisionalQrPayload?.trim();
+      if (pending != null && pending.isNotEmpty) {
+        return pending;
+      }
+      return invoice.id.trim().isEmpty ? null : invoice.id;
+    }
+
     if (fiscalStatus == null) {
       return null;
     }

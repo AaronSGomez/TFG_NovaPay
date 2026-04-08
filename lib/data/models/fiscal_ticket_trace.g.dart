@@ -22,56 +22,96 @@ const FiscalTicketTraceSchema = CollectionSchema(
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'invoiceId': PropertySchema(
+    r'fiscalStatus': PropertySchema(
       id: 1,
+      name: r'fiscalStatus',
+      type: IsarType.string,
+    ),
+    r'invoiceId': PropertySchema(
+      id: 2,
       name: r'invoiceId',
       type: IsarType.string,
     ),
     r'invoiceNumber': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'invoiceNumber',
       type: IsarType.long,
     ),
     r'invoiceSeries': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'invoiceSeries',
       type: IsarType.string,
     ),
     r'lines': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'lines',
       type: IsarType.objectList,
       target: r'FiscalTicketTraceLine',
     ),
     r'paymentMethod': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'paymentMethod',
       type: IsarType.string,
     ),
+    r'printedFiscalStatus': PropertySchema(
+      id: 7,
+      name: r'printedFiscalStatus',
+      type: IsarType.string,
+    ),
+    r'printedQrPayload': PropertySchema(
+      id: 8,
+      name: r'printedQrPayload',
+      type: IsarType.string,
+    ),
+    r'queueStatus': PropertySchema(
+      id: 9,
+      name: r'queueStatus',
+      type: IsarType.string,
+    ),
+    r'responseCode': PropertySchema(
+      id: 10,
+      name: r'responseCode',
+      type: IsarType.string,
+    ),
+    r'responseDescription': PropertySchema(
+      id: 11,
+      name: r'responseDescription',
+      type: IsarType.string,
+    ),
+    r'secureVerificationCode': PropertySchema(
+      id: 12,
+      name: r'secureVerificationCode',
+      type: IsarType.string,
+    ),
     r'ticketTableLabel': PropertySchema(
-      id: 6,
+      id: 13,
       name: r'ticketTableLabel',
       type: IsarType.string,
     ),
     r'ticketTableNumber': PropertySchema(
-      id: 7,
+      id: 14,
       name: r'ticketTableNumber',
       type: IsarType.long,
     ),
     r'ticketUuid': PropertySchema(
-      id: 8,
+      id: 15,
       name: r'ticketUuid',
       type: IsarType.string,
     ),
     r'ticketZone': PropertySchema(
-      id: 9,
+      id: 16,
       name: r'ticketZone',
       type: IsarType.string,
     ),
     r'totalAmount': PropertySchema(
-      id: 10,
+      id: 17,
       name: r'totalAmount',
       type: IsarType.double,
+    ),
+    r'verificationUrl': PropertySchema(
+      id: 18,
+      name: r'verificationUrl',
+      type: IsarType.string,
     )
   },
   estimateSize: _fiscalTicketTraceEstimateSize,
@@ -108,6 +148,12 @@ int _fiscalTicketTraceEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.fiscalStatus;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.invoiceId.length * 3;
   bytesCount += 3 + object.invoiceSeries.length * 3;
   bytesCount += 3 + object.lines.length * 3;
@@ -121,6 +167,37 @@ int _fiscalTicketTraceEstimateSize(
   }
   {
     final value = object.paymentMethod;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.printedFiscalStatus;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.printedQrPayload;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.queueStatus.length * 3;
+  {
+    final value = object.responseCode;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.responseDescription;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.secureVerificationCode;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
     }
@@ -143,6 +220,12 @@ int _fiscalTicketTraceEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.verificationUrl;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -153,21 +236,29 @@ void _fiscalTicketTraceSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDateTime(offsets[0], object.createdAt);
-  writer.writeString(offsets[1], object.invoiceId);
-  writer.writeLong(offsets[2], object.invoiceNumber);
-  writer.writeString(offsets[3], object.invoiceSeries);
+  writer.writeString(offsets[1], object.fiscalStatus);
+  writer.writeString(offsets[2], object.invoiceId);
+  writer.writeLong(offsets[3], object.invoiceNumber);
+  writer.writeString(offsets[4], object.invoiceSeries);
   writer.writeObjectList<FiscalTicketTraceLine>(
-    offsets[4],
+    offsets[5],
     allOffsets,
     FiscalTicketTraceLineSchema.serialize,
     object.lines,
   );
-  writer.writeString(offsets[5], object.paymentMethod);
-  writer.writeString(offsets[6], object.ticketTableLabel);
-  writer.writeLong(offsets[7], object.ticketTableNumber);
-  writer.writeString(offsets[8], object.ticketUuid);
-  writer.writeString(offsets[9], object.ticketZone);
-  writer.writeDouble(offsets[10], object.totalAmount);
+  writer.writeString(offsets[6], object.paymentMethod);
+  writer.writeString(offsets[7], object.printedFiscalStatus);
+  writer.writeString(offsets[8], object.printedQrPayload);
+  writer.writeString(offsets[9], object.queueStatus);
+  writer.writeString(offsets[10], object.responseCode);
+  writer.writeString(offsets[11], object.responseDescription);
+  writer.writeString(offsets[12], object.secureVerificationCode);
+  writer.writeString(offsets[13], object.ticketTableLabel);
+  writer.writeLong(offsets[14], object.ticketTableNumber);
+  writer.writeString(offsets[15], object.ticketUuid);
+  writer.writeString(offsets[16], object.ticketZone);
+  writer.writeDouble(offsets[17], object.totalAmount);
+  writer.writeString(offsets[18], object.verificationUrl);
 }
 
 FiscalTicketTrace _fiscalTicketTraceDeserialize(
@@ -178,23 +269,31 @@ FiscalTicketTrace _fiscalTicketTraceDeserialize(
 ) {
   final object = FiscalTicketTrace();
   object.createdAt = reader.readDateTime(offsets[0]);
+  object.fiscalStatus = reader.readStringOrNull(offsets[1]);
   object.id = id;
-  object.invoiceId = reader.readString(offsets[1]);
-  object.invoiceNumber = reader.readLong(offsets[2]);
-  object.invoiceSeries = reader.readString(offsets[3]);
+  object.invoiceId = reader.readString(offsets[2]);
+  object.invoiceNumber = reader.readLong(offsets[3]);
+  object.invoiceSeries = reader.readString(offsets[4]);
   object.lines = reader.readObjectList<FiscalTicketTraceLine>(
-        offsets[4],
+        offsets[5],
         FiscalTicketTraceLineSchema.deserialize,
         allOffsets,
         FiscalTicketTraceLine(),
       ) ??
       [];
-  object.paymentMethod = reader.readStringOrNull(offsets[5]);
-  object.ticketTableLabel = reader.readStringOrNull(offsets[6]);
-  object.ticketTableNumber = reader.readLongOrNull(offsets[7]);
-  object.ticketUuid = reader.readStringOrNull(offsets[8]);
-  object.ticketZone = reader.readStringOrNull(offsets[9]);
-  object.totalAmount = reader.readDouble(offsets[10]);
+  object.paymentMethod = reader.readStringOrNull(offsets[6]);
+  object.printedFiscalStatus = reader.readStringOrNull(offsets[7]);
+  object.printedQrPayload = reader.readStringOrNull(offsets[8]);
+  object.queueStatus = reader.readString(offsets[9]);
+  object.responseCode = reader.readStringOrNull(offsets[10]);
+  object.responseDescription = reader.readStringOrNull(offsets[11]);
+  object.secureVerificationCode = reader.readStringOrNull(offsets[12]);
+  object.ticketTableLabel = reader.readStringOrNull(offsets[13]);
+  object.ticketTableNumber = reader.readLongOrNull(offsets[14]);
+  object.ticketUuid = reader.readStringOrNull(offsets[15]);
+  object.ticketZone = reader.readStringOrNull(offsets[16]);
+  object.totalAmount = reader.readDouble(offsets[17]);
+  object.verificationUrl = reader.readStringOrNull(offsets[18]);
   return object;
 }
 
@@ -208,12 +307,14 @@ P _fiscalTicketTraceDeserializeProp<P>(
     case 0:
       return (reader.readDateTime(offset)) as P;
     case 1:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readLong(offset)) as P;
-    case 3:
       return (reader.readString(offset)) as P;
+    case 3:
+      return (reader.readLong(offset)) as P;
     case 4:
+      return (reader.readString(offset)) as P;
+    case 5:
       return (reader.readObjectList<FiscalTicketTraceLine>(
             offset,
             FiscalTicketTraceLineSchema.deserialize,
@@ -221,18 +322,32 @@ P _fiscalTicketTraceDeserializeProp<P>(
             FiscalTicketTraceLine(),
           ) ??
           []) as P;
-    case 5:
-      return (reader.readStringOrNull(offset)) as P;
     case 6:
       return (reader.readStringOrNull(offset)) as P;
     case 7:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 8:
       return (reader.readStringOrNull(offset)) as P;
     case 9:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 10:
+      return (reader.readStringOrNull(offset)) as P;
+    case 11:
+      return (reader.readStringOrNull(offset)) as P;
+    case 12:
+      return (reader.readStringOrNull(offset)) as P;
+    case 13:
+      return (reader.readStringOrNull(offset)) as P;
+    case 14:
+      return (reader.readLongOrNull(offset)) as P;
+    case 15:
+      return (reader.readStringOrNull(offset)) as P;
+    case 16:
+      return (reader.readStringOrNull(offset)) as P;
+    case 17:
       return (reader.readDouble(offset)) as P;
+    case 18:
+      return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -487,6 +602,160 @@ extension FiscalTicketTraceQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      fiscalStatusIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'fiscalStatus',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      fiscalStatusIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'fiscalStatus',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      fiscalStatusEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'fiscalStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      fiscalStatusGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'fiscalStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      fiscalStatusLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'fiscalStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      fiscalStatusBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'fiscalStatus',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      fiscalStatusStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'fiscalStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      fiscalStatusEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'fiscalStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      fiscalStatusContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'fiscalStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      fiscalStatusMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'fiscalStatus',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      fiscalStatusIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'fiscalStatus',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      fiscalStatusIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'fiscalStatus',
+        value: '',
       ));
     });
   }
@@ -1119,6 +1388,914 @@ extension FiscalTicketTraceQueryFilter
   }
 
   QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedFiscalStatusIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'printedFiscalStatus',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedFiscalStatusIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'printedFiscalStatus',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedFiscalStatusEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'printedFiscalStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedFiscalStatusGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'printedFiscalStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedFiscalStatusLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'printedFiscalStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedFiscalStatusBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'printedFiscalStatus',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedFiscalStatusStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'printedFiscalStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedFiscalStatusEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'printedFiscalStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedFiscalStatusContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'printedFiscalStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedFiscalStatusMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'printedFiscalStatus',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedFiscalStatusIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'printedFiscalStatus',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedFiscalStatusIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'printedFiscalStatus',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedQrPayloadIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'printedQrPayload',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedQrPayloadIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'printedQrPayload',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedQrPayloadEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'printedQrPayload',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedQrPayloadGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'printedQrPayload',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedQrPayloadLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'printedQrPayload',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedQrPayloadBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'printedQrPayload',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedQrPayloadStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'printedQrPayload',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedQrPayloadEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'printedQrPayload',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedQrPayloadContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'printedQrPayload',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedQrPayloadMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'printedQrPayload',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedQrPayloadIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'printedQrPayload',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      printedQrPayloadIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'printedQrPayload',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      queueStatusEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'queueStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      queueStatusGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'queueStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      queueStatusLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'queueStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      queueStatusBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'queueStatus',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      queueStatusStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'queueStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      queueStatusEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'queueStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      queueStatusContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'queueStatus',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      queueStatusMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'queueStatus',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      queueStatusIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'queueStatus',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      queueStatusIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'queueStatus',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseCodeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'responseCode',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseCodeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'responseCode',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseCodeEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'responseCode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseCodeGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'responseCode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseCodeLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'responseCode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseCodeBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'responseCode',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseCodeStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'responseCode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseCodeEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'responseCode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseCodeContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'responseCode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseCodeMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'responseCode',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseCodeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'responseCode',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseCodeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'responseCode',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseDescriptionIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'responseDescription',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseDescriptionIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'responseDescription',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseDescriptionEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'responseDescription',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseDescriptionGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'responseDescription',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseDescriptionLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'responseDescription',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseDescriptionBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'responseDescription',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseDescriptionStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'responseDescription',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseDescriptionEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'responseDescription',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseDescriptionContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'responseDescription',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseDescriptionMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'responseDescription',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseDescriptionIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'responseDescription',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      responseDescriptionIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'responseDescription',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      secureVerificationCodeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'secureVerificationCode',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      secureVerificationCodeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'secureVerificationCode',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      secureVerificationCodeEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'secureVerificationCode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      secureVerificationCodeGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'secureVerificationCode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      secureVerificationCodeLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'secureVerificationCode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      secureVerificationCodeBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'secureVerificationCode',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      secureVerificationCodeStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'secureVerificationCode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      secureVerificationCodeEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'secureVerificationCode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      secureVerificationCodeContains(String value,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'secureVerificationCode',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      secureVerificationCodeMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'secureVerificationCode',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      secureVerificationCodeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'secureVerificationCode',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      secureVerificationCodeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'secureVerificationCode',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
       ticketTableLabelIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1719,6 +2896,160 @@ extension FiscalTicketTraceQueryFilter
       ));
     });
   }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      verificationUrlIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'verificationUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      verificationUrlIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'verificationUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      verificationUrlEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'verificationUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      verificationUrlGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'verificationUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      verificationUrlLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'verificationUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      verificationUrlBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'verificationUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      verificationUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'verificationUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      verificationUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'verificationUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      verificationUrlContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'verificationUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      verificationUrlMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'verificationUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      verificationUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'verificationUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterFilterCondition>
+      verificationUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'verificationUrl',
+        value: '',
+      ));
+    });
+  }
 }
 
 extension FiscalTicketTraceQueryObject
@@ -1747,6 +3078,20 @@ extension FiscalTicketTraceQuerySortBy
       sortByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortByFiscalStatus() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fiscalStatus', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortByFiscalStatusDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fiscalStatus', Sort.desc);
     });
   }
 
@@ -1803,6 +3148,90 @@ extension FiscalTicketTraceQuerySortBy
       sortByPaymentMethodDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'paymentMethod', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortByPrintedFiscalStatus() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'printedFiscalStatus', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortByPrintedFiscalStatusDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'printedFiscalStatus', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortByPrintedQrPayload() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'printedQrPayload', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortByPrintedQrPayloadDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'printedQrPayload', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortByQueueStatus() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'queueStatus', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortByQueueStatusDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'queueStatus', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortByResponseCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'responseCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortByResponseCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'responseCode', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortByResponseDescription() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'responseDescription', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortByResponseDescriptionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'responseDescription', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortBySecureVerificationCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'secureVerificationCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortBySecureVerificationCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'secureVerificationCode', Sort.desc);
     });
   }
 
@@ -1875,6 +3304,20 @@ extension FiscalTicketTraceQuerySortBy
       return query.addSortBy(r'totalAmount', Sort.desc);
     });
   }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortByVerificationUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'verificationUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      sortByVerificationUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'verificationUrl', Sort.desc);
+    });
+  }
 }
 
 extension FiscalTicketTraceQuerySortThenBy
@@ -1890,6 +3333,20 @@ extension FiscalTicketTraceQuerySortThenBy
       thenByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenByFiscalStatus() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fiscalStatus', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenByFiscalStatusDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'fiscalStatus', Sort.desc);
     });
   }
 
@@ -1963,6 +3420,90 @@ extension FiscalTicketTraceQuerySortThenBy
   }
 
   QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenByPrintedFiscalStatus() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'printedFiscalStatus', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenByPrintedFiscalStatusDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'printedFiscalStatus', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenByPrintedQrPayload() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'printedQrPayload', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenByPrintedQrPayloadDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'printedQrPayload', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenByQueueStatus() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'queueStatus', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenByQueueStatusDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'queueStatus', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenByResponseCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'responseCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenByResponseCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'responseCode', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenByResponseDescription() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'responseDescription', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenByResponseDescriptionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'responseDescription', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenBySecureVerificationCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'secureVerificationCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenBySecureVerificationCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'secureVerificationCode', Sort.desc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
       thenByTicketTableLabel() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'ticketTableLabel', Sort.asc);
@@ -2031,6 +3572,20 @@ extension FiscalTicketTraceQuerySortThenBy
       return query.addSortBy(r'totalAmount', Sort.desc);
     });
   }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenByVerificationUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'verificationUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QAfterSortBy>
+      thenByVerificationUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'verificationUrl', Sort.desc);
+    });
+  }
 }
 
 extension FiscalTicketTraceQueryWhereDistinct
@@ -2039,6 +3594,13 @@ extension FiscalTicketTraceQueryWhereDistinct
       distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'createdAt');
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QDistinct>
+      distinctByFiscalStatus({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'fiscalStatus', caseSensitive: caseSensitive);
     });
   }
 
@@ -2068,6 +3630,52 @@ extension FiscalTicketTraceQueryWhereDistinct
       distinctByPaymentMethod({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'paymentMethod',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QDistinct>
+      distinctByPrintedFiscalStatus({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'printedFiscalStatus',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QDistinct>
+      distinctByPrintedQrPayload({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'printedQrPayload',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QDistinct>
+      distinctByQueueStatus({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'queueStatus', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QDistinct>
+      distinctByResponseCode({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'responseCode', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QDistinct>
+      distinctByResponseDescription({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'responseDescription',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QDistinct>
+      distinctBySecureVerificationCode({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'secureVerificationCode',
           caseSensitive: caseSensitive);
     });
   }
@@ -2107,6 +3715,14 @@ extension FiscalTicketTraceQueryWhereDistinct
       return query.addDistinctBy(r'totalAmount');
     });
   }
+
+  QueryBuilder<FiscalTicketTrace, FiscalTicketTrace, QDistinct>
+      distinctByVerificationUrl({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'verificationUrl',
+          caseSensitive: caseSensitive);
+    });
+  }
 }
 
 extension FiscalTicketTraceQueryProperty
@@ -2121,6 +3737,13 @@ extension FiscalTicketTraceQueryProperty
       createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'createdAt');
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, String?, QQueryOperations>
+      fiscalStatusProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'fiscalStatus');
     });
   }
 
@@ -2160,6 +3783,48 @@ extension FiscalTicketTraceQueryProperty
   }
 
   QueryBuilder<FiscalTicketTrace, String?, QQueryOperations>
+      printedFiscalStatusProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'printedFiscalStatus');
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, String?, QQueryOperations>
+      printedQrPayloadProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'printedQrPayload');
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, String, QQueryOperations>
+      queueStatusProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'queueStatus');
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, String?, QQueryOperations>
+      responseCodeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'responseCode');
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, String?, QQueryOperations>
+      responseDescriptionProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'responseDescription');
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, String?, QQueryOperations>
+      secureVerificationCodeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'secureVerificationCode');
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, String?, QQueryOperations>
       ticketTableLabelProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'ticketTableLabel');
@@ -2191,6 +3856,13 @@ extension FiscalTicketTraceQueryProperty
       totalAmountProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'totalAmount');
+    });
+  }
+
+  QueryBuilder<FiscalTicketTrace, String?, QQueryOperations>
+      verificationUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'verificationUrl');
     });
   }
 }

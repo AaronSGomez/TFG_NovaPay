@@ -83,3 +83,6 @@ assets/
 ## Autor
 
 **kabalera82** — [GitHub](https://github.com/kabalera82)
+
+## arranque limpio
+flutter run --dart-define=TEST_RESET_ON_START=true
