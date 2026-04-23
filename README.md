@@ -86,3 +86,7 @@ assets/
 
 ## arranque limpio
 flutter run --dart-define=TEST_RESET_ON_START=true
+
+
+## release 
+.\mvnw.cmd clean package -DskipTests
