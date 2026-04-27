@@ -17,7 +17,12 @@ class SectionHeader extends StatelessWidget {
         children: [
           Text(title, style: Theme.of(context).textTheme.headlineMedium),
           const Spacer(),
-          if (onRefresh != null) IconButton(icon: const Icon(Icons.refresh), tooltip: 'Recargar', onPressed: onRefresh),
+          if (onRefresh != null)
+            IconButton(
+              icon:    const Icon(Icons.refresh),
+              tooltip: 'Recargar',
+              onPressed: onRefresh,
+            ),
           if (trailing != null) trailing!,
         ],
       ),

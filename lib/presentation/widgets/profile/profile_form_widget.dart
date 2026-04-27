@@ -28,17 +28,7 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
   late final TextEditingController _phoneCtrl;
   late final TextEditingController _passwordCtrl;
   late final TextEditingController _emailCtrl;
-  late final TextEditingController _ticketDisplayNameCtrl;
-  late final TextEditingController _companyNameCtrl;
-  late final TextEditingController _fiscalNameCtrl;
-  late final TextEditingController _taxIdCtrl;
-  late final TextEditingController _addressCtrl;
-
-  late String? _logoPath; // Ruta del logo
-  bool _hasLocalVerifactuLink = false;
-  bool _showPassword = false;
-  final ImagePicker _imagePicker = ImagePicker();
-  BusinessConfig? _businessConfig;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -137,6 +127,9 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
   }
 
   Future<void> _save() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+
     widget.user
       ..username = _usernameCtrl.text.trim()
       ..lastName = _lastNameCtrl.text.trim()
@@ -175,7 +168,7 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
     if (!mounted) return;
 
     _passwordCtrl.clear();
-    setState(() {});
+    setState(() => _saving = false);
 
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Datos actualizados correctamente')));
   }
@@ -222,7 +215,7 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
                 const SizedBox(height: 32),
 
                 // ── Datos personales ─────────────────────────────────────
-                _SectionLabel(label: 'Datos personales', theme: theme),
+                _SectionLabel(label: 'Datos personales'),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _usernameCtrl,
@@ -265,7 +258,7 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
                 const SizedBox(height: 32),
 
                 // ── Cambio de contraseña ──────────────────────────────────
-                _SectionLabel(label: 'Cambiar contraseña', theme: theme),
+                _SectionLabel(label: 'Cambiar contraseña'),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _passwordCtrl,
@@ -416,9 +409,17 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    icon: const Icon(Icons.save_outlined),
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 18, height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.save_outlined),
                     label: const Text('Guardar cambios'),
-                    onPressed: _save,
+                    onPressed: _saving ? null : _save,
                   ),
                 ),
               ],
@@ -434,9 +435,8 @@ class _ProfileFormWidgetState extends State<ProfileFormWidget> {
 
 class _SectionLabel extends StatelessWidget {
   final String label;
-  final ThemeData theme;
 
-  const _SectionLabel({required this.label, required this.theme});
+  const _SectionLabel({required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -445,7 +445,7 @@ class _SectionLabel extends StatelessWidget {
       children: [
         Align(
           alignment: Alignment.centerLeft,
-          child: Text(label, style: theme.textTheme.headlineSmall),
+          child: Text(label, style: Theme.of(context).textTheme.headlineSmall),
         ),
         const Divider(),
       ],

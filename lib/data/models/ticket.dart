@@ -30,5 +30,10 @@ class Ticket {
   bool isParked = false;
 
   String? zone;
+
+  /// UUID del ticket padre cuando este registro es un pago parcial.
+  /// null → ticket normal (completo) o ticket padre de una sesión.
+  String? parentTicketUuid;
+
   List<TicketLine> lines = [];
 }

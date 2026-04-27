@@ -113,56 +113,6 @@ class TicketController extends GetxController {
     }
   }
 
-  Future<void> payActive(PaymentMethod method) async {
-    if (activeTicket.value == null) return;
-    try {
-      final ticketForReceipt = _cloneTicket(activeTicket.value!);
-      await _service.pay(activeTicket.value!, method);
-      activeTicket.value = null;
-      await loadTickets();
-      Get.find<TicketHistoryController>().loadAll();
-      await _emitAndPrint(ticketForReceipt);
-    } catch (e) {
-      Get.snackbar('Error', 'No se pudo cobrar el ticket');
-    }
-  }
-
-  Future<void> reprintTicket(Ticket ticket) async {
-    try {
-      final trace = await _fiscalTraceService.getByTicketUuid(ticket.uuid);
-      final ticketForPrint = _buildTicketForReprint(ticket, trace);
-      final invoiceForPrint = trace != null
-          ? BackendInvoiceResponse(
-              id: trace.invoiceId,
-              series: trace.invoiceSeries,
-              number: trace.invoiceNumber,
-              type: 'SIMPLIFICADA',
-              status: trace.printedFiscalStatus ?? trace.fiscalStatus ?? 'REIMPRESION',
-              issueDate: trace.createdAt.toIso8601String(),
-              totalAmount: trace.totalAmount,
-            )
-          : BackendInvoiceResponse(
-              id: ticket.uuid,
-              series: 'TICKET',
-              number: ticket.id,
-              type: 'SIMPLIFICADA',
-              status: 'REIMPRESION',
-              issueDate: ticket.createdAt.toIso8601String(),
-              totalAmount: ticket.totalAmount,
-            );
-      final fiscalStatus = trace == null ? null : _fiscalStatusFromTrace(trace);
-      await _receiptPrintService.printTicket(
-        ticket: ticketForPrint,
-        invoice: invoiceForPrint,
-        fiscalStatus: fiscalStatus,
-        provisionalQrPayload: trace?.printedQrPayload,
-      );
-      Get.snackbar('Impresion', 'Ticket reimpreso correctamente.');
-    } catch (e) {
-      Get.snackbar('Impresion', 'No se pudo reimprimir el ticket: $e');
-    }
-  }
-
   Future<void> cancelActive() async {
     if (activeTicket.value == null) return;
     try {
@@ -170,19 +120,23 @@ class TicketController extends GetxController {
       activeTicket.value = null;
       await loadTickets();
       Get.find<TicketHistoryController>().loadAll();
+      Get.find<ReportController>().loadLiveStats();
     } catch (e) {
       Get.snackbar('Error', 'No se pudo cancelar el ticket');
     }
   }
 
-  Future<void> payLines(List<int> lineIndices, PaymentMethod method, {double? cashGiven, double? cashChange}) async {
+  Future<void> payLines(
+    List<int> lineIndices,
+    PaymentMethod method, {
+    Map<int, int>? partialQtys,
+  }) async {
     if (activeTicket.value == null) return;
     try {
-      final current = activeTicket.value!;
-      final isFullPayment = lineIndices.length == current.lines.length;
-      final ticketForReceipt = _cloneTicket(current);
-
-      await _service.paySelectedLines(activeTicket.value!, lineIndices, method);
+      await _service.paySelectedLines(
+        activeTicket.value!, lineIndices, method,
+        partialQtys: partialQtys,
+      );
       final updated = await _service.getById(activeTicket.value!.id);
       if (updated == null || updated.status == TicketStatus.pagado) {
         activeTicket.value = null;

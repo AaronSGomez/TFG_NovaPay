@@ -35,12 +35,13 @@ class TicketService {
     return _isar.tickets.get(id);
   }
 
-  Future<Ticket?> getByUuid(String uuid) async {
-    return _isar.tickets.filter().uuidEqualTo(uuid).findFirst();
-  }
-
+  /// Tickets activos NO aparcados (mesas abiertas en sala).
   Future<List<Ticket>> getOpen() async {
-    return _isar.tickets.filter().statusEqualTo(TicketStatus.abierto).sortByCreatedAtDesc().findAll();
+    return _isar.tickets
+        .filter()
+        .statusEqualTo(TicketStatus.abierto)
+        .isParkedEqualTo(false)
+        .findAll();
   }
 
   Future<List<Ticket>> getParked() async {
@@ -55,6 +56,18 @@ class TicketService {
 
   Future<List<Ticket>> getAll() async {
     return _isar.tickets.where().sortByCreatedAtDesc().findAll();
+  }
+
+  /// Devuelve solo tickets cerrados (pagado o cancelado), ordenados por fecha desc.
+  /// Usado por el historial: los tickets abiertos pertenecen a la sala.
+  Future<List<Ticket>> getClosed() async {
+    return _isar.tickets
+        .filter()
+        .statusEqualTo(TicketStatus.pagado)
+        .or()
+        .statusEqualTo(TicketStatus.cancelado)
+        .sortByCreatedAtDesc()
+        .findAll();
   }
 
   Future<void> addLine(Ticket ticket, TicketLine line) async {
@@ -88,12 +101,27 @@ class TicketService {
     });
   }
 
+  /// Pago total de un ticket (todas sus líneas).
+  /// Decrementa el stock de todos los productos incluidos.
   Future<void> pay(Ticket ticket, PaymentMethod method) async {
-    ticket.status = TicketStatus.pagado;
+    ticket.status        = TicketStatus.pagado;
     ticket.paymentMethod = method;
-    ticket.isParked = false;
+    ticket.isParked      = false;
+
+    final affectedIds = ticket.lines.map((l) => l.productId).toSet().toList();
+    final affectedProducts = await _isar.products
+        .where()
+        .findAll()
+        .then((all) => all.where((p) => affectedIds.contains(p.id)).toList());
+
     await _isar.writeTxn(() async {
       await _isar.tickets.put(ticket);
+      for (final line in ticket.lines) {
+        _decrementStock(affectedProducts, line);
+      }
+      for (final p in affectedProducts) {
+        await _isar.products.put(p);
+      }
     });
   }
 
@@ -104,43 +132,116 @@ class TicketService {
     });
   }
 
-  Future<void> paySelectedLines(Ticket ticket, List<int> lineIndices, PaymentMethod method) async {
+  /// Paga las líneas indicadas por índice.
+  /// [partialQtys] permite indicar cuántas unidades se pagan por línea
+  /// (clave = índice de línea, valor = cantidad a pagar).
+  /// Si no se especifica para una línea, se paga la cantidad completa.
+  Future<void> paySelectedLines(
+    Ticket ticket,
+    List<int> lineIndices,
+    PaymentMethod method, {
+    Map<int, int>? partialQtys,
+  }) async {
     final paidLines = <TicketLine>[];
     final remaining = <TicketLine>[];
+
     for (int i = 0; i < ticket.lines.length; i++) {
-      if (lineIndices.contains(i)) {
-        paidLines.add(ticket.lines[i]);
-      } else {
+      if (!lineIndices.contains(i)) {
         remaining.add(ticket.lines[i]);
+        continue;
+      }
+
+      final line      = ticket.lines[i];
+      final qtyToPay  = (partialQtys?[i] ?? line.quantity).clamp(1, line.quantity);
+
+      if (qtyToPay >= line.quantity) {
+        // Línea completa cobrada
+        paidLines.add(line);
+      } else {
+        // Pago parcial: registrar la parte cobrada y dejar el resto
+        final paid = TicketLine()
+          ..productName   = line.productName
+          ..productId     = line.productId
+          ..quantity      = qtyToPay
+          ..priceAtMoment = line.priceAtMoment
+          ..totalLine     = line.priceAtMoment * qtyToPay;
+        paidLines.add(paid);
+
+        final rest = TicketLine()
+          ..productName   = line.productName
+          ..productId     = line.productId
+          ..quantity      = line.quantity - qtyToPay
+          ..priceAtMoment = line.priceAtMoment
+          ..totalLine     = line.priceAtMoment * (line.quantity - qtyToPay);
+        remaining.add(rest);
       }
     }
+
+    // Leer stock antes de la transacción de escritura
+    final affectedIds      = paidLines.map((l) => l.productId).toSet().toList();
+    final affectedProducts = await _isar.products
+        .where()
+        .findAll()
+        .then((all) => all.where((p) => affectedIds.contains(p.id)).toList());
 
     if (remaining.isEmpty) {
-      // Fully paid — keep lines intact for history, just change status
-      ticket.status = TicketStatus.pagado;
+      // ── Pago TOTAL ────────────────────────────────────────────────────────
+      // El ticket original queda como registro histórico completo.
+      ticket.status        = TicketStatus.pagado;
       ticket.paymentMethod = method;
-      ticket.isParked = false;
-      // ticket.lines and ticket.totalAmount stay as-is (full history preserved)
-    } else {
-      // Partial payment — remove paid lines, keep the rest
-      ticket.lines = remaining;
-      ticket.totalAmount = remaining.fold(0.0, (sum, l) => sum + l.totalLine);
-    }
+      ticket.isParked      = false;
+      // ticket.lines y totalAmount se mantienen (historial íntegro)
 
-    final allProducts = await _isar.products.where().findAll();
-    await _isar.writeTxn(() async {
-      await _isar.tickets.put(ticket);
-      for (final line in paidLines) {
-        final product = allProducts.where((p) => p.name == line.productName).firstOrNull;
-        if (product != null) {
-          final isUnlimited = product.stock > 100 || product.stock < 0;
-          if (!isUnlimited) {
-            product.stock = (product.stock - line.quantity).clamp(0, 999999);
-            await _isar.products.put(product);
-          }
+      await _isar.writeTxn(() async {
+        await _isar.tickets.put(ticket);
+        for (final line in paidLines) {
+          _decrementStock(affectedProducts, line);
         }
-      }
-    });
+        for (final p in affectedProducts) {
+          await _isar.products.put(p);
+        }
+      });
+    } else {
+      // ── Pago PARCIAL ──────────────────────────────────────────────────────
+      // Se crea un ticket cerrado con las líneas cobradas como registro
+      // histórico. El ticket original sigue abierto con las líneas pendientes.
+      final paymentRecord = Ticket()
+        ..uuid               = _uuid.v4()
+        ..parentTicketUuid   = ticket.uuid   // vincula al ticket padre
+        ..createdAt          = DateTime.now()
+        ..status             = TicketStatus.pagado
+        ..paymentMethod      = method
+        ..tableNumber        = ticket.tableNumber
+        ..zone               = ticket.zone
+        ..tableOrLabel       = ticket.tableOrLabel
+        ..isParked           = false
+        ..totalAmount        = paidLines.fold(0.0, (s, l) => s + l.totalLine)
+        ..lines              = paidLines;
+
+      ticket.lines       = remaining;
+      ticket.totalAmount = remaining.fold(0.0, (s, l) => s + l.totalLine);
+
+      await _isar.writeTxn(() async {
+        await _isar.tickets.put(paymentRecord); // registro histórico cerrado
+        await _isar.tickets.put(ticket);         // ticket abierto con resto
+        for (final line in paidLines) {
+          _decrementStock(affectedProducts, line);
+        }
+        for (final p in affectedProducts) {
+          await _isar.products.put(p);
+        }
+      });
+    }
+  }
+
+  /// Decrementa el stock del producto asociado a [line] en la lista en memoria.
+  /// La escritura a Isar la hace el llamador dentro de writeTxn.
+  void _decrementStock(List<Product> products, TicketLine line) {
+    final idx = products.indexWhere((p) => p.id == line.productId);
+    if (idx >= 0 && products[idx].stock > 0) {
+      products[idx].stock =
+          (products[idx].stock - line.quantity).clamp(0, 999999);
+    }
   }
 
   Future<void> updateLineQuantity(Ticket ticket, String productName, int delta) async {

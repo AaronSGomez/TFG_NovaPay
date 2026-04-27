@@ -33,40 +33,45 @@ const TicketSchema = CollectionSchema(
       type: IsarType.objectList,
       target: r'TicketLine',
     ),
-    r'paymentMethod': PropertySchema(
+    r'parentTicketUuid': PropertySchema(
       id: 3,
+      name: r'parentTicketUuid',
+      type: IsarType.string,
+    ),
+    r'paymentMethod': PropertySchema(
+      id: 4,
       name: r'paymentMethod',
       type: IsarType.byte,
       enumMap: _TicketpaymentMethodEnumValueMap,
     ),
     r'status': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'status',
       type: IsarType.byte,
       enumMap: _TicketstatusEnumValueMap,
     ),
     r'tableNumber': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'tableNumber',
       type: IsarType.long,
     ),
     r'tableOrLabel': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'tableOrLabel',
       type: IsarType.string,
     ),
     r'totalAmount': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'totalAmount',
       type: IsarType.double,
     ),
     r'uuid': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'uuid',
       type: IsarType.string,
     ),
     r'zone': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'zone',
       type: IsarType.string,
     )
@@ -140,6 +145,12 @@ int _ticketEstimateSize(
     }
   }
   {
+    final value = object.parentTicketUuid;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.tableOrLabel;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -169,13 +180,14 @@ void _ticketSerialize(
     TicketLineSchema.serialize,
     object.lines,
   );
-  writer.writeByte(offsets[3], object.paymentMethod.index);
-  writer.writeByte(offsets[4], object.status.index);
-  writer.writeLong(offsets[5], object.tableNumber);
-  writer.writeString(offsets[6], object.tableOrLabel);
-  writer.writeDouble(offsets[7], object.totalAmount);
-  writer.writeString(offsets[8], object.uuid);
-  writer.writeString(offsets[9], object.zone);
+  writer.writeString(offsets[3], object.parentTicketUuid);
+  writer.writeByte(offsets[4], object.paymentMethod.index);
+  writer.writeByte(offsets[5], object.status.index);
+  writer.writeLong(offsets[6], object.tableNumber);
+  writer.writeString(offsets[7], object.tableOrLabel);
+  writer.writeDouble(offsets[8], object.totalAmount);
+  writer.writeString(offsets[9], object.uuid);
+  writer.writeString(offsets[10], object.zone);
 }
 
 Ticket _ticketDeserialize(
@@ -195,17 +207,18 @@ Ticket _ticketDeserialize(
         TicketLine(),
       ) ??
       [];
+  object.parentTicketUuid = reader.readStringOrNull(offsets[3]);
   object.paymentMethod =
-      _TicketpaymentMethodValueEnumMap[reader.readByteOrNull(offsets[3])] ??
+      _TicketpaymentMethodValueEnumMap[reader.readByteOrNull(offsets[4])] ??
           PaymentMethod.efectivo;
   object.status =
-      _TicketstatusValueEnumMap[reader.readByteOrNull(offsets[4])] ??
+      _TicketstatusValueEnumMap[reader.readByteOrNull(offsets[5])] ??
           TicketStatus.abierto;
-  object.tableNumber = reader.readLongOrNull(offsets[5]);
-  object.tableOrLabel = reader.readStringOrNull(offsets[6]);
-  object.totalAmount = reader.readDouble(offsets[7]);
-  object.uuid = reader.readString(offsets[8]);
-  object.zone = reader.readStringOrNull(offsets[9]);
+  object.tableNumber = reader.readLongOrNull(offsets[6]);
+  object.tableOrLabel = reader.readStringOrNull(offsets[7]);
+  object.totalAmount = reader.readDouble(offsets[8]);
+  object.uuid = reader.readString(offsets[9]);
+  object.zone = reader.readStringOrNull(offsets[10]);
   return object;
 }
 
@@ -229,20 +242,22 @@ P _ticketDeserializeProp<P>(
           ) ??
           []) as P;
     case 3:
+      return (reader.readStringOrNull(offset)) as P;
+    case 4:
       return (_TicketpaymentMethodValueEnumMap[reader.readByteOrNull(offset)] ??
           PaymentMethod.efectivo) as P;
-    case 4:
+    case 5:
       return (_TicketstatusValueEnumMap[reader.readByteOrNull(offset)] ??
           TicketStatus.abierto) as P;
-    case 5:
-      return (reader.readLongOrNull(offset)) as P;
     case 6:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 7:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 8:
-      return (reader.readString(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 9:
+      return (reader.readString(offset)) as P;
+    case 10:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -803,6 +818,157 @@ extension TicketQueryFilter on QueryBuilder<Ticket, Ticket, QFilterCondition> {
         upper,
         includeUpper,
       );
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterFilterCondition> parentTicketUuidIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'parentTicketUuid',
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterFilterCondition>
+      parentTicketUuidIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'parentTicketUuid',
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterFilterCondition> parentTicketUuidEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'parentTicketUuid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterFilterCondition>
+      parentTicketUuidGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'parentTicketUuid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterFilterCondition> parentTicketUuidLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'parentTicketUuid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterFilterCondition> parentTicketUuidBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'parentTicketUuid',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterFilterCondition>
+      parentTicketUuidStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'parentTicketUuid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterFilterCondition> parentTicketUuidEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'parentTicketUuid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterFilterCondition> parentTicketUuidContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'parentTicketUuid',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterFilterCondition> parentTicketUuidMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'parentTicketUuid',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterFilterCondition>
+      parentTicketUuidIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'parentTicketUuid',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterFilterCondition>
+      parentTicketUuidIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'parentTicketUuid',
+        value: '',
+      ));
     });
   }
 
@@ -1500,6 +1666,18 @@ extension TicketQuerySortBy on QueryBuilder<Ticket, Ticket, QSortBy> {
     });
   }
 
+  QueryBuilder<Ticket, Ticket, QAfterSortBy> sortByParentTicketUuid() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'parentTicketUuid', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterSortBy> sortByParentTicketUuidDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'parentTicketUuid', Sort.desc);
+    });
+  }
+
   QueryBuilder<Ticket, Ticket, QAfterSortBy> sortByPaymentMethod() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'paymentMethod', Sort.asc);
@@ -1622,6 +1800,18 @@ extension TicketQuerySortThenBy on QueryBuilder<Ticket, Ticket, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Ticket, Ticket, QAfterSortBy> thenByParentTicketUuid() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'parentTicketUuid', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Ticket, Ticket, QAfterSortBy> thenByParentTicketUuidDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'parentTicketUuid', Sort.desc);
+    });
+  }
+
   QueryBuilder<Ticket, Ticket, QAfterSortBy> thenByPaymentMethod() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'paymentMethod', Sort.asc);
@@ -1720,6 +1910,14 @@ extension TicketQueryWhereDistinct on QueryBuilder<Ticket, Ticket, QDistinct> {
     });
   }
 
+  QueryBuilder<Ticket, Ticket, QDistinct> distinctByParentTicketUuid(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'parentTicketUuid',
+          caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Ticket, Ticket, QDistinct> distinctByPaymentMethod() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'paymentMethod');
@@ -1788,6 +1986,12 @@ extension TicketQueryProperty on QueryBuilder<Ticket, Ticket, QQueryProperty> {
   QueryBuilder<Ticket, List<TicketLine>, QQueryOperations> linesProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lines');
+    });
+  }
+
+  QueryBuilder<Ticket, String?, QQueryOperations> parentTicketUuidProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'parentTicketUuid');
     });
   }
 
