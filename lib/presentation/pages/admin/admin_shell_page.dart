@@ -27,13 +27,13 @@ class _AdminShellPageState extends State<AdminShellPage> {
   bool _initialized = false;
 
   static const _navItems = [
-    _NavItem(Icons.person_outline,          'Mi perfil'),
-    _NavItem(Icons.group,                   'Usuarios'),
-    _NavItem(Icons.table_chart_outlined,    'Sala'),
-    _NavItem(Icons.inventory_2,             'Inventario'),
-    _NavItem(Icons.receipt_long,            'Tickets'),
-    _NavItem(Icons.account_balance_wallet,  'Caja'),
-    _NavItem(Icons.verified_user,           'Verifactu'),
+    _NavItem(Icons.person_outline, 'Mi perfil'),
+    _NavItem(Icons.group, 'Usuarios'),
+    _NavItem(Icons.table_chart_outlined, 'Sala'),
+    _NavItem(Icons.inventory_2, 'Inventario'),
+    _NavItem(Icons.receipt_long, 'Tickets'),
+    _NavItem(Icons.account_balance_wallet, 'Caja'),
+    _NavItem(Icons.verified_user, 'Verifactu'),
   ];
 
   @override
@@ -45,7 +45,7 @@ class _AdminShellPageState extends State<AdminShellPage> {
     _user = args is User ? args : User();
 
     _sections = [
-      PersonalAreaSection(user: _user),
+      PersonalAreaSection(user: _user, onOpenVerifactu: () => Get.find<AdminShellController>().navigateTo(6)),
       const UsersListSection(),
       const SalaSection(),
       const InventarioSection(),
@@ -63,7 +63,7 @@ class _AdminShellPageState extends State<AdminShellPage> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isWide     = constraints.maxWidth >= 600;
+        final isWide = constraints.maxWidth >= 600;
         final isExtended = constraints.maxWidth >= 900;
 
         return Scaffold(
@@ -85,14 +85,9 @@ class _AdminShellPageState extends State<AdminShellPage> {
 
   // ── AppBar ──────────────────────────────────────────────────────────────
 
-  PreferredSizeWidget _buildAppBar(
-    BuildContext context,
-    AdminShellController ctrl,
-  ) {
+  PreferredSizeWidget _buildAppBar(BuildContext context, AdminShellController ctrl) {
     return AppBar(
-      title: Obx(
-        () => Text(_navItems[ctrl.selectedIndex.value].label),
-      ),
+      title: Obx(() => Text(_navItems[ctrl.selectedIndex.value].label)),
       actions: [
         IconButton(
           icon: const Icon(Icons.logout),
@@ -112,12 +107,7 @@ class _AdminShellPageState extends State<AdminShellPage> {
         selectedIndex: ctrl.selectedIndex.value,
         onDestinationSelected: ctrl.navigateTo,
         destinations: _navItems
-            .map(
-              (item) => NavigationRailDestination(
-                icon: Icon(item.icon),
-                label: Text(item.label),
-              ),
-            )
+            .map((item) => NavigationRailDestination(icon: Icon(item.icon), label: Text(item.label)))
             .toList(),
       ),
     );
@@ -141,11 +131,7 @@ class _AdminShellPageState extends State<AdminShellPage> {
                   backgroundColor: AppTheme.secondary,
                   child: Text(
                     displayName[0].toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 24,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -156,11 +142,7 @@ class _AdminShellPageState extends State<AdminShellPage> {
                     children: [
                       Text(
                         displayName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
@@ -174,25 +156,20 @@ class _AdminShellPageState extends State<AdminShellPage> {
             ),
           ),
           Expanded(
-            child: Obx(
-              () {
-                final currentIndex = ctrl.selectedIndex.value;
-                return ListView.builder(
-                  padding: EdgeInsets.zero,
-                  itemCount: _navItems.length,
-                  itemBuilder: (_, i) {
-                    final selected = currentIndex == i;
-                    return ListTile(
-                    leading: Icon(
-                      _navItems[i].icon,
-                      color: selected ? Theme.of(context).colorScheme.primary : null,
-                    ),
+            child: Obx(() {
+              final currentIndex = ctrl.selectedIndex.value;
+              return ListView.builder(
+                padding: EdgeInsets.zero,
+                itemCount: _navItems.length,
+                itemBuilder: (_, i) {
+                  final selected = currentIndex == i;
+                  return ListTile(
+                    leading: Icon(_navItems[i].icon, color: selected ? Theme.of(context).colorScheme.primary : null),
                     title: Text(
                       _navItems[i].label,
                       style: TextStyle(
                         color: selected ? Theme.of(context).colorScheme.primary : null,
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.normal,
+                        fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
                       ),
                     ),
                     selected: selected,
@@ -203,9 +180,8 @@ class _AdminShellPageState extends State<AdminShellPage> {
                     },
                   );
                 },
-                );
-              },
-            ),
+              );
+            }),
           ),
         ],
       ),
@@ -215,12 +191,7 @@ class _AdminShellPageState extends State<AdminShellPage> {
   // ── Body ─────────────────────────────────────────────────────────────────
 
   Widget _buildBody(AdminShellController ctrl) {
-    return Obx(
-      () => IndexedStack(
-        index: ctrl.selectedIndex.value,
-        children: _sections,
-      ),
-    );
+    return Obx(() => IndexedStack(index: ctrl.selectedIndex.value, children: _sections));
   }
 }
 

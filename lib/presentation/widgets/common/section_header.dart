@@ -7,12 +7,7 @@ class SectionHeader extends StatelessWidget {
   final VoidCallback? onRefresh;
   final Widget? trailing;
 
-  const SectionHeader({
-    super.key,
-    required this.title,
-    this.onRefresh,
-    this.trailing,
-  });
+  const SectionHeader({super.key, required this.title, this.onRefresh, this.trailing});
 
   @override
   Widget build(BuildContext context) {

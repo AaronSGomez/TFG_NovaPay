@@ -18,11 +18,7 @@ class TicketPanelWidget extends StatelessWidget {
   final int          tableNumber;
   final VoidCallback onClose;
 
-  const TicketPanelWidget({
-    super.key,
-    required this.tableNumber,
-    required this.onClose,
-  });
+  const TicketPanelWidget({super.key, required this.tableNumber, required this.onClose});
 
   @override
   Widget build(BuildContext context) {

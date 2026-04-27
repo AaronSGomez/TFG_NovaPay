@@ -1,6 +1,7 @@
 // lib/services/ticket_service.dart
 import 'package:isar/isar.dart';
 import 'package:uuid/uuid.dart';
+import '../data/models/fiscal_ticket_trace.dart';
 import '../data/models/product.dart';
 import '../data/models/ticket.dart';
 import '../data/models/ticket_line.dart';
@@ -44,23 +45,17 @@ class TicketService {
   }
 
   Future<List<Ticket>> getParked() async {
-    return _isar.tickets
-        .filter()
-        .isParkedEqualTo(true)
-        .findAll();
+    return _isar.tickets.filter().isParkedEqualTo(true).sortByCreatedAtDesc().findAll();
   }
 
   Future<List<Ticket>> getByDate(DateTime date) async {
     final start = DateTime(date.year, date.month, date.day);
-    final end   = start.add(const Duration(days: 1));
-    return _isar.tickets
-        .filter()
-        .createdAtBetween(start, end)
-        .findAll();
+    final end = start.add(const Duration(days: 1));
+    return _isar.tickets.filter().createdAtBetween(start, end).sortByCreatedAtDesc().findAll();
   }
 
   Future<List<Ticket>> getAll() async {
-    return _isar.tickets.where().findAll();
+    return _isar.tickets.where().sortByCreatedAtDesc().findAll();
   }
 
   /// Devuelve solo tickets cerrados (pagado o cancelado), ordenados por fecha desc.
@@ -80,8 +75,7 @@ class TicketService {
     final existing = lines.indexWhere((l) => l.productName == line.productName);
     if (existing >= 0) {
       lines[existing].quantity += line.quantity;
-      lines[existing].totalLine =
-          lines[existing].quantity * lines[existing].priceAtMoment;
+      lines[existing].totalLine = lines[existing].quantity * lines[existing].priceAtMoment;
     } else {
       lines.add(line);
     }
@@ -93,10 +87,8 @@ class TicketService {
   }
 
   Future<void> removeLine(Ticket ticket, String productName) async {
-    ticket.lines =
-        ticket.lines.where((l) => l.productName != productName).toList();
-    ticket.totalAmount =
-        ticket.lines.fold(0, (sum, l) => sum + l.totalLine);
+    ticket.lines = ticket.lines.where((l) => l.productName != productName).toList();
+    ticket.totalAmount = ticket.lines.fold(0, (sum, l) => sum + l.totalLine);
     await _isar.writeTxn(() async {
       await _isar.tickets.put(ticket);
     });
@@ -252,11 +244,7 @@ class TicketService {
     }
   }
 
-  Future<void> updateLineQuantity(
-    Ticket ticket,
-    String productName,
-    int delta,
-  ) async {
+  Future<void> updateLineQuantity(Ticket ticket, String productName, int delta) async {
     final lines = List<TicketLine>.from(ticket.lines);
     final idx = lines.indexWhere((l) => l.productName == productName);
     if (idx < 0) return;
@@ -298,22 +286,59 @@ class TicketService {
   /// Mantiene únicamente las líneas seleccionadas como las lineas finales cobradas,
   /// recalcula el totalAmount y cierra el ticket como [pagado].
   /// NO descuenta stock (ya fue descontado en el cobro original).
-  Future<void> correctPayment(
-    Ticket ticket,
-    List<int> lineIndices,
-    PaymentMethod method,
-  ) async {
+  Future<void> correctPayment(Ticket ticket, List<int> lineIndices, PaymentMethod method) async {
     final finalLines = [
       for (int i = 0; i < ticket.lines.length; i++)
         if (lineIndices.contains(i)) ticket.lines[i],
     ];
-    ticket.lines        = finalLines;
-    ticket.totalAmount  = finalLines.fold(0.0, (sum, l) => sum + l.totalLine);
-    ticket.status       = TicketStatus.pagado;
+    ticket.lines = finalLines;
+    ticket.totalAmount = finalLines.fold(0.0, (sum, l) => sum + l.totalLine);
+    ticket.status = TicketStatus.pagado;
     ticket.paymentMethod = method;
-    ticket.isParked     = false;
+    ticket.isParked = false;
     await _isar.writeTxn(() async {
       await _isar.tickets.put(ticket);
     });
+  }
+
+  Future<Ticket> createFromFiscalTrace(FiscalTicketTrace trace) async {
+    final ticket = Ticket()
+      ..uuid = _uuid.v4()
+      ..createdAt = DateTime.now()
+      ..status = TicketStatus.pagado
+      ..paymentMethod = _parsePaymentMethod(trace.paymentMethod)
+      ..tableNumber = trace.ticketTableNumber
+      ..tableOrLabel = trace.ticketTableLabel
+      ..zone = trace.ticketZone
+      ..isParked = false
+      ..lines = trace.lines
+          .map(
+            (line) => TicketLine()
+              ..productName = line.productName
+              ..quantity = line.quantity
+              ..priceAtMoment = line.unitPrice
+              ..totalLine = line.totalLine,
+          )
+          .toList();
+
+    ticket.totalAmount = ticket.lines.fold(0.0, (sum, line) => sum + line.totalLine);
+
+    await _isar.writeTxn(() async {
+      await _isar.tickets.put(ticket);
+    });
+
+    return ticket;
+  }
+
+  PaymentMethod _parsePaymentMethod(String? raw) {
+    switch (raw) {
+      case 'tarjeta':
+        return PaymentMethod.tarjeta;
+      case 'mixto':
+        return PaymentMethod.mixto;
+      case 'efectivo':
+      default:
+        return PaymentMethod.efectivo;
+    }
   }
 }

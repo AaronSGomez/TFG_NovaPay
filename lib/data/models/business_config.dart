@@ -7,6 +7,7 @@ part 'business_config.g.dart';
 class BusinessConfig {
   Id id = Isar.autoIncrement;
   String businessName = '';
+  String fiscalName = '';
   String cifNif = '';
   String address = '';
   String? logoPath;

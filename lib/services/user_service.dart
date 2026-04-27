@@ -11,7 +11,7 @@ class UserService {
   // ── Hashing ───────────────────────────────────────────────────────────────
 
   static String hashPassword(String password) {
-    final bytes  = utf8.encode(password);
+    final bytes = utf8.encode(password);
     final digest = sha256.convert(bytes);
     return digest.toString();
   }
@@ -42,32 +42,16 @@ class UserService {
     final hashed = hashPassword(password);
 
     // Try by email (hashed)
-    final byEmail = await _isar.users
-        .filter()
-        .emailEqualTo(identifier)
-        .passwordEqualTo(hashed)
-        .findFirst();
+    final byEmail = await _isar.users.filter().emailEqualTo(identifier).passwordEqualTo(hashed).findFirst();
     if (byEmail != null) return byEmail;
 
     // Try by username (hashed)
-    final byUsername = await _isar.users
-        .filter()
-        .usernameEqualTo(identifier)
-        .passwordEqualTo(hashed)
-        .findFirst();
+    final byUsername = await _isar.users.filter().usernameEqualTo(identifier).passwordEqualTo(hashed).findFirst();
     if (byUsername != null) return byUsername;
 
     // Backward-compat: plain-text stored password (upgrades on success)
-    User? plain = await _isar.users
-        .filter()
-        .emailEqualTo(identifier)
-        .passwordEqualTo(password)
-        .findFirst();
-    plain ??= await _isar.users
-        .filter()
-        .usernameEqualTo(identifier)
-        .passwordEqualTo(password)
-        .findFirst();
+    User? plain = await _isar.users.filter().emailEqualTo(identifier).passwordEqualTo(password).findFirst();
+    plain ??= await _isar.users.filter().usernameEqualTo(identifier).passwordEqualTo(password).findFirst();
 
     if (plain != null) {
       plain.password = hashed;
@@ -84,32 +68,35 @@ class UserService {
     });
   }
 
+  Future<User?> getAdmin() async {
+    return _isar.users.filter().roleEqualTo('admin').findFirst();
+  }
+
   Future<void> seedAdmin() async {
-    final existing = await _isar.users
-        .filter()
-        .emailEqualTo('admin')
-        .findFirst();
-    if (existing != null) {
+    final existing = await _isar.users.filter().roleEqualTo('admin').findFirst();
+    final legacyByEmail = existing == null ? await _isar.users.filter().emailEqualTo('admin').findFirst() : null;
+    final target = existing ?? legacyByEmail;
+    if (target != null) {
       bool updated = false;
-      if (existing.role != 'admin') {
-        existing.role = 'admin';
+      if (target.role != 'admin') {
+        target.role = 'admin';
         updated = true;
       }
-      final pwd = existing.password;
+      final pwd = target.password;
       if (pwd != null && !_isHashed(pwd)) {
-        existing.password = hashPassword(pwd);
+        target.password = hashPassword(pwd);
         updated = true;
       }
       if (updated) {
-        await _isar.writeTxn(() async => _isar.users.put(existing));
+        await _isar.writeTxn(() async => _isar.users.put(target));
       }
       return;
     }
     final admin = User()
       ..username = 'Admin'
-      ..email    = 'admin'
+      ..email = 'admin'
       ..password = hashPassword('1234')
-      ..role     = 'admin';
+      ..role = 'admin';
     await _isar.writeTxn(() async {
       await _isar.users.put(admin);
     });

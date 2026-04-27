@@ -14,8 +14,19 @@ class User {
   String? email;
 
   String? phone;
+  String? ticketDisplayName;
 
   // 'admin' o 'user'
   String role = 'user';
-}
 
+  // Campos de empresa
+  String? companyName;
+  String? taxId; // CIF/NIF (razón social)
+  String? address; // Dirección
+  String? logoPath; // Ruta a imagen del logo
+
+  // Controla si estos campos son editables desde el frontend
+  // true = solo lectura (bloqueado por backend)
+  // false = editable (default)
+  bool backendEditable = false;
+}

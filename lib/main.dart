@@ -3,12 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:isar/isar.dart';
 import 'package:media_kit/media_kit.dart';
-
 import 'config/theme.dart';
 import 'config/app_routes.dart';
 import 'data/local/isar.dart';
-import 'data/seed/product_seed.dart';
-import 'services/user_service.dart';
 import 'services/config_service.dart';
 import 'bindings/app_bindings.dart';
 import 'presentation/pages/splash_page.dart';
@@ -16,14 +13,26 @@ import 'presentation/pages/login_page.dart';
 import 'presentation/pages/admin/admin_shell_page.dart';
 import 'presentation/pages/user/user_shell_page.dart';
 import 'presentation/pages/profile_page.dart';
+import 'package:flutter/services.dart'; // Para controlar la orientación y el modo de pantalla
+
+const bool _resetOnStartForTests = bool.fromEnvironment('TEST_RESET_ON_START', defaultValue: false);
 
 void main() async {
+  // Asegura que los bindings de Flutter estén inicializados
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Oculta la barra de estado (arriba) y la barra de navegación/taskbar (abajo)
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+  // Fija la orientación en horizontal (Landscape) para que no se gire solo
+  SystemChrome.setPreferredOrientations([DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
+
+  // Inicializa el servicio de base de datos y otros servicios necesarios antes de ejecutar la aplicación
   MediaKit.ensureInitialized();
   final isar = await openIsar();
-  await UserService(isar).seedAdmin();
-  await seedProducts(isar);
-  await ConfigService(isar).seedBusinessConfig();
+  if (_resetOnStartForTests) {
+    await ConfigService(isar).factoryResetKeepingSeeds();
+  }
   runApp(MainApp(isar: isar));
 }
 
@@ -39,10 +48,10 @@ class MainApp extends StatelessWidget {
       initialBinding: AppBindings(isar),
       initialRoute: AppRoutes.splash,
       getPages: [
-        GetPage(name: AppRoutes.splash,  page: () => const SplashPage()),
-        GetPage(name: AppRoutes.login,   page: () => const LoginPage()),
-        GetPage(name: AppRoutes.admin,   page: () => const AdminShellPage()),
-        GetPage(name: AppRoutes.user,    page: () => const UserShellPage()),
+        GetPage(name: AppRoutes.splash, page: () => const SplashPage()),
+        GetPage(name: AppRoutes.login, page: () => const LoginPage()),
+        GetPage(name: AppRoutes.admin, page: () => const AdminShellPage()),
+        GetPage(name: AppRoutes.user, page: () => const UserShellPage()),
         GetPage(name: AppRoutes.profile, page: () => const ProfilePage()),
       ],
       debugShowCheckedModeBanner: false,

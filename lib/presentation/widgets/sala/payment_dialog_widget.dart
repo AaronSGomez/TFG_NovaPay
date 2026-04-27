@@ -34,7 +34,7 @@ class PaymentDialogWidget extends StatefulWidget {
 }
 
 class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
-  final _fmt      = AppFormats.currency;
+  final _fmt = AppFormats.currency;
   final _cashCtrl = TextEditingController();
 
   PaymentMethod _method    = PaymentMethod.efectivo;
@@ -104,28 +104,28 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
             Row(
               children: [
                 _MethodButton(
-                  label:    'Efectivo',
-                  icon:     Icons.payments_outlined,
+                  label: 'Efectivo',
+                  icon: Icons.payments_outlined,
                   selected: _method == PaymentMethod.efectivo,
-                  onTap:    () => setState(() {
-                    _method    = PaymentMethod.efectivo;
+                  onTap: () => setState(() {
+                    _method = PaymentMethod.efectivo;
                     _cashGiven = 0;
                     _cashCtrl.clear();
                   }),
                 ),
                 const SizedBox(width: 8),
                 _MethodButton(
-                  label:    'Tarjeta',
-                  icon:     Icons.credit_card_outlined,
+                  label: 'Tarjeta',
+                  icon: Icons.credit_card_outlined,
                   selected: _method == PaymentMethod.tarjeta,
-                  onTap:    () => setState(() => _method = PaymentMethod.tarjeta),
+                  onTap: () => setState(() => _method = PaymentMethod.tarjeta),
                 ),
                 const SizedBox(width: 8),
                 _MethodButton(
-                  label:    'Mixto',
-                  icon:     Icons.compare_arrows,
+                  label: 'Mixto',
+                  icon: Icons.compare_arrows,
                   selected: _method == PaymentMethod.mixto,
-                  onTap:    () => setState(() => _method = PaymentMethod.mixto),
+                  onTap: () => setState(() => _method = PaymentMethod.mixto),
                 ),
               ],
             ),
@@ -145,6 +145,7 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
                 onChanged: (v) => setState(
                   () => _cashGiven = double.tryParse(v.replaceAll(',', '.')) ?? 0,
                 ),
+                onChanged: (v) => setState(() => _cashGiven = double.tryParse(v.replaceAll(',', '.')) ?? 0),
               ),
               const SizedBox(height: 10),
               Row(
@@ -190,17 +191,12 @@ class _PaymentDialogWidgetState extends State<PaymentDialogWidget> {
 // ── Botón de método de pago ───────────────────────────────────────────────────
 
 class _MethodButton extends StatelessWidget {
-  final String       label;
-  final IconData     icon;
-  final bool         selected;
+  final String label;
+  final IconData icon;
+  final bool selected;
   final VoidCallback onTap;
 
-  const _MethodButton({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.onTap,
-  });
+  const _MethodButton({required this.label, required this.icon, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -241,7 +237,7 @@ class _MethodButton extends StatelessWidget {
                   fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
