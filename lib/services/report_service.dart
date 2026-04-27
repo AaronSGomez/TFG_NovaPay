@@ -8,6 +8,39 @@ class ReportService {
   final Isar _isar;
   ReportService(this._isar);
 
+  DateTime _startOfDay(DateTime date) => DateTime(date.year, date.month, date.day);
+
+  DateTime _endOfDay(DateTime date) => DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+  Future<DateTime> _resolveOpenPeriodStart() async {
+    final todayStart = _startOfDay(DateTime.now());
+    final lastClose = await getLatestClose();
+    if (lastClose != null) {
+      return _startOfDay(lastClose.date).add(const Duration(days: 1));
+    }
+
+    final paidTickets = await _isar.tickets.filter().statusEqualTo(TicketStatus.pagado).findAll();
+    final expenses = await _isar.expenses.where().findAll();
+
+    DateTime? earliest;
+
+    for (final ticket in paidTickets) {
+      final day = _startOfDay(ticket.createdAt);
+      if (earliest == null || day.isBefore(earliest)) {
+        earliest = day;
+      }
+    }
+
+    for (final expense in expenses) {
+      final day = _startOfDay(expense.date);
+      if (earliest == null || day.isBefore(earliest)) {
+        earliest = day;
+      }
+    }
+
+    return earliest ?? todayStart;
+  }
+
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   Future<DailyReport> _buildStats(DateTime start, DateTime end) async {
@@ -32,21 +65,18 @@ class ReportService {
         totalCard += ticket.totalAmount / 2;
       }
       for (final line in ticket.lines) {
-        productCount[line.productName] =
-            (productCount[line.productName] ?? 0) + line.quantity;
+        productCount[line.productName] = (productCount[line.productName] ?? 0) + line.quantity;
       }
     }
 
-    final summary = productCount.entries
-        .map((e) => '${e.key}:${e.value}')
-        .toList();
+    final summary = productCount.entries.map((e) => '${e.key}:${e.value}').toList();
 
     return DailyReport()
-      ..date         = start
-      ..totalCash    = totalCash
-      ..totalCard    = totalCard
-      ..grandTotal   = totalCash + totalCard
-      ..ticketCount  = tickets.length
+      ..date = start
+      ..totalCash = totalCash
+      ..totalCard = totalCard
+      ..grandTotal = totalCash + totalCard
+      ..ticketCount = tickets.length
       ..totalExpenses = 0
       ..soldProductsSummary = summary;
   }
@@ -55,18 +85,15 @@ class ReportService {
 
   Future<DailyReport> getLiveStats() async {
     final today = DateTime.now();
-    final start = DateTime(today.year, today.month, today.day);
-    final end   = start.add(const Duration(days: 1));
+    final start = await _resolveOpenPeriodStart();
+    final end = _startOfDay(today).add(const Duration(days: 1));
     final report = await _buildStats(start, end);
 
-    // Include today's expenses in live stats
-    final expenses = await _isar.expenses
-        .filter()
-        .dateBetween(start, end)
-        .findAll();
+    // Include expenses from the same open period in live stats.
+    final expenses = await _isar.expenses.filter().dateBetween(start, end).findAll();
     final totalExpenses = expenses.fold(0.0, (sum, e) => sum + e.amount);
     report.totalExpenses = totalExpenses;
-    report.grandTotal    = report.totalCash + report.totalCard - totalExpenses;
+    report.grandTotal = report.totalCash + report.totalCard - totalExpenses;
 
     return report;
   }
@@ -75,23 +102,25 @@ class ReportService {
 
   Future<DailyReport> closeDay() async {
     final today = DateTime.now();
-    final start = DateTime(today.year, today.month, today.day);
-    final end   = start.add(const Duration(days: 1));
+    final todayStart = _startOfDay(today);
+    final start = await _resolveOpenPeriodStart();
+    final end = todayStart.add(const Duration(days: 1));
 
     final report = await _buildStats(start, end);
 
     // Query actual expenses for today
-    final expenses = await _isar.expenses
-        .filter()
-        .dateBetween(start, end)
-        .findAll();
-    final totalExpenses =
-        expenses.fold(0.0, (sum, e) => sum + e.amount);
+    final expenses = await _isar.expenses.filter().dateBetween(start, end).findAll();
+    final totalExpenses = expenses.fold(0.0, (sum, e) => sum + e.amount);
 
     report
-      ..date          = today
+      ..date = todayStart
       ..totalExpenses = totalExpenses
-      ..grandTotal    = report.totalCash + report.totalCard - totalExpenses;
+      ..grandTotal = report.totalCash + report.totalCard - totalExpenses;
+
+    final existing = await getByDate(todayStart);
+    if (existing != null) {
+      report.id = existing.id;
+    }
 
     await _isar.writeTxn(() async {
       await _isar.dailyReports.put(report);
@@ -104,17 +133,15 @@ class ReportService {
 
   Future<DailyReport?> getByDate(DateTime date) async {
     final start = DateTime(date.year, date.month, date.day);
-    final end   = DateTime(date.year, date.month, date.day, 23, 59, 59);
-    return _isar.dailyReports
-        .filter()
-        .dateBetween(start, end)
-        .findFirst();
+    final end = DateTime(date.year, date.month, date.day, 23, 59, 59);
+    return _isar.dailyReports.filter().dateBetween(start, end).findFirst();
   }
 
   Future<List<DailyReport>> getAll() async {
-    return _isar.dailyReports
-        .where()
-        .sortByDateDesc()
-        .findAll();
+    return _isar.dailyReports.where().sortByDateDesc().findAll();
+  }
+
+  Future<DailyReport?> getLatestClose() async {
+    return _isar.dailyReports.where().sortByDateDesc().findFirst();
   }
 }
