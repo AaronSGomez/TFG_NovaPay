@@ -87,6 +87,8 @@ class _InventarioSectionState extends State<InventarioSection> {
 
         Obx(() {
           final cats = _ctrl.categories.toList();
+          final selectedCat = _ctrl.selectedCategory.value;
+
           return SizedBox(
             height: 44,
             child: ListView.separated(
@@ -96,8 +98,7 @@ class _InventarioSectionState extends State<InventarioSection> {
               separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (_, i) {
                 final cat = cats[i];
-                final selected =
-                    _ctrl.selectedCategory.value == cat || (cat == 'Todos' && _ctrl.selectedCategory.value.isEmpty);
+                final selected = selectedCat == cat || (cat == 'Todos' && selectedCat.isEmpty);
                 return FilterChipButton(label: cat, selected: selected, onTap: () => _ctrl.applyFilter(cat));
               },
             ),
