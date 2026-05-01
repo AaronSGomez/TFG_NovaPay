@@ -24,9 +24,17 @@
   <img src="assets/images/ico.png" width="250" alt="NovaPay Logo" />
 </div>
 
-[Características](#-características) • [Arquitectura](#-arquitectura)• [Uso](#-uso) • [Instalación](#-instalación)  
+[Características](#-características) • [Arquitectura](#-arquitectura) • [Documentación](#-documentación) • [Instalación](#-instalación)  
 
 </div>
+
+---
+
+## 📚 Documentación
+
+Para una comprensión profunda de las decisiones de diseño, arquitectura, procesos de desarrollo y manual de usuario, puede consultar la memoria oficial del proyecto:
+
+👉 **[Memoria del Proyecto (PDF)](Entregables/AaronGomez_TFG.pdf)**
 
 ---
 
