@@ -7,12 +7,12 @@
 ![GetX](https://img.shields.io/badge/State-GetX-7C3AED?style=for-the-badge&logo=getx&logoColor=white)
 
 <div align="center">
- <img src="https://cdn.simpleicons.org/flutter" height="50" alt="Flutter" />
+  <img src="https://cdn.simpleicons.org/flutter" height="50" alt="Flutter" />
   <img src="https://cdn.simpleicons.org/dart" height="50" alt="Dart" />
-   <img src="https://cdn.simpleicons.org/microsoft" height="50" alt="Windows" />
+  <img src="https://cdn.simpleicons.org/windows" height="50" alt="Windows" />
   <img src="https://cdn.simpleicons.org/android" height="50" alt="Android" />
   <img src="https://cdn.simpleicons.org/github/ffff" height="50" alt="GitHub" />
-  </div>
+</div>
 
 <div align="center">
   <h1>
