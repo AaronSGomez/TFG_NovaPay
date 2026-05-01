@@ -109,15 +109,25 @@ flutter run
 
 ## 👥 Autores
 
-**Aaron Gómez**
+**Aarón Gómez**
 - GitHub: [@aaronsgomez](https://github.com/aaronsgomez)
 
-**kabalera82**
+**Marcos García**
 - GitHub: [@kabalera82](https://github.com/kabalera82)
 
 ## 🙏 Agradecimientos
 - **Olga Mª Moreno Martín** (Por su valiosa guía y apoyo)
 - Profesores de DAM de Prometeo
+
+---
+
+## 📄 Licencia y Propiedad Intelectual
+
+**Copyright © 2026 Aarón Gómez & Marcos García. Todos los derechos reservados.**
+
+Queda estrictamente prohibida la copia, reproducción, modificación, distribución o uso de este software, su código fuente, diseño o activos multimedia sin la autorización previa y expresa por escrito de los autores: **Aarón Gómez** y **Marcos García**.
+
+Este proyecto ha sido desarrollado con fines académicos y profesionales bajo un régimen de propiedad privada e integridad intelectual. Cualquier uso no autorizado constituye una infracción de los derechos de autor.
 
 ---
 
