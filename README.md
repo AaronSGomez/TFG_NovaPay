@@ -11,7 +11,10 @@
   <img src="https://cdn.simpleicons.org/dart" height="50" alt="Dart" />
    <img src="assets/images/windows_logo.png" height="50" alt="Windows" />
   <img src="https://cdn.simpleicons.org/android" height="50" alt="Android" />
-  <img src="https://cdn.simpleicons.org/github/ffff" height="50" alt="GitHub" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.simpleicons.org/github/white">
+    <img src="https://cdn.simpleicons.org/github" height="50" alt="GitHub">
+  </picture>
 </div>
 
 <div align="center">
