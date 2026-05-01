@@ -2,7 +2,7 @@
 
 ![Flutter](https://img.shields.io/badge/Flutter-7C3AED?style=for-the-badge&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-7C3AED?style=for-the-badge&logo=dart&logoColor=white)
-![Cross Platform](https://img.shields.io/badge/Cross--Platform-Windows%20%7C%20Android-7C3AED?style=for-the-badge&logo=microsoft&logoColor=white)
+![Cross Platform](https://img.shields.io/badge/Cross--Platform-Windows%20%7C%20Android-7C3AED?style=for-the-badge&logo=windows&logoColor=white)
 ![Isar](https://img.shields.io/badge/Database-Isar-7C3AED?style=for-the-badge&logo=isar&logoColor=white)
 ![GetX](https://img.shields.io/badge/State-GetX-7C3AED?style=for-the-badge&logo=getx&logoColor=white)
 
@@ -14,7 +14,13 @@
   <img src="https://cdn.simpleicons.org/github/ffff" height="50" alt="GitHub" />
   </div>
 
-**Solución de Punto de Venta (TPV) profesional y multiplataforma orientada a la gestión integral de negocios, desarrollada con Flutter y optimizada para alto rendimiento offline mediante Isar Database**
+<div align="center">
+  <h1>
+    <img src="assets/images/ico.png" width="45" height="45" alt="NovaPay Logo" />
+    NovaPay TPV — Solution
+  </h1>
+  <p><b>Solución integral de gestión comercial para hostelería y comercio con alto rendimiento offline</b></p>
+</div>
 
 [Características](#-características) • [Arquitectura](#-arquitectura)• [Uso](#-uso) • [Instalación](#-instalación)  
 
