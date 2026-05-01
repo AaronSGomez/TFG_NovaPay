@@ -15,11 +15,10 @@
 </div>
 
 <div align="center">
-  <h1>
-    <img src="assets/images/ico.png" width="45" height="45" alt="NovaPay Logo" />
-    NovaPay TPV — Solution
-  </h1>
+  <h1>NovaPay TPV — Solution</h1>
   <p><b>Solución integral de gestión comercial para hostelería y comercio con alto rendimiento offline</b></p>
+  <br/>
+  <img src="assets/images/ico.png" width="250" alt="NovaPay Logo" />
 </div>
 
 [Características](#-características) • [Arquitectura](#-arquitectura)• [Uso](#-uso) • [Instalación](#-instalación)  
@@ -31,7 +30,7 @@
 ## 📸 Capturas de pantalla
 
 <div align="center">
-  <img src="assets/images/novapay.webp" width="800" alt="Interfaz de Ventas" />
+  <img src="assets/images/sala_view.png" width="800" alt="Interfaz de Ventas" />
 </div>
 
 <div align="center">
