@@ -2,14 +2,14 @@
 
 ![Flutter](https://img.shields.io/badge/Flutter-7C3AED?style=for-the-badge&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-7C3AED?style=for-the-badge&logo=dart&logoColor=white)
-![Cross Platform](https://img.shields.io/badge/Cross--Platform-Windows%20%7C%20Android-7C3AED?style=for-the-badge&logo=windows&logoColor=white)
+![Cross Platform](https://img.shields.io/badge/Cross--Platform-Windows%20%7C%20Android-7C3AED?style=for-the-badge&logo=microsoft&logoColor=white)
 ![Isar](https://img.shields.io/badge/Database-Isar-7C3AED?style=for-the-badge&logo=isar&logoColor=white)
 ![GetX](https://img.shields.io/badge/State-GetX-7C3AED?style=for-the-badge&logo=getx&logoColor=white)
 
 <div align="center">
  <img src="https://cdn.simpleicons.org/flutter" height="50" alt="Flutter" />
   <img src="https://cdn.simpleicons.org/dart" height="50" alt="Dart" />
-   <img src="https://cdn.simpleicons.org/windows" height="50" alt="Windows" />
+   <img src="https://cdn.simpleicons.org/microsoft" height="50" alt="Windows" />
   <img src="https://cdn.simpleicons.org/android" height="50" alt="Android" />
   <img src="https://cdn.simpleicons.org/github/ffff" height="50" alt="GitHub" />
   </div>
@@ -25,7 +25,7 @@
 ## 📸 Capturas de pantalla
 
 <div align="center">
-  <img src="assets/images/sala_view.png" width="800" alt="Interfaz de Ventas" />
+  <img src="assets/images/novapay.webp" width="800" alt="Interfaz de Ventas" />
 </div>
 
 <div align="center">
@@ -106,6 +106,9 @@ flutter run
 
 **Aaron Gómez**
 - GitHub: [@aaronsgomez](https://github.com/aaronsgomez)
+
+**kabalera82**
+- GitHub: [@kabalera82](https://github.com/kabalera82)
 
 ## 🙏 Agradecimientos
 - **Olga Mª Moreno Martín** (Por su valiosa guía y apoyo)
