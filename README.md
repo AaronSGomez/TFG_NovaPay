@@ -38,7 +38,7 @@ NovaPay es una solución de Punto de Venta (TPV) profesional, moderna y multipla
 ### Pasos para ejecución local
 ```bash
 # 1. Clonar el proyecto
-git clone https://github.com/kabalera82/novapay-frontend.git
+git clone https://github.com/AaronSGomez/TFG_NovaPay.git
 
 # 2. Instalar dependencias
 flutter pub get
