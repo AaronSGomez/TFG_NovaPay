@@ -123,7 +123,7 @@ flutter run
 **Aarón Gómez**
 - GitHub: [@aaronsgomez](https://github.com/aaronsgomez)
 
-**Marcos García**
+**Marcos Padilla**
 - GitHub: [@kabalera82](https://github.com/kabalera82)
 
 ## 🙏 Agradecimientos
